@@ -33,7 +33,7 @@ const CopilotSidebar: React.FC<CopilotSidebarProps> = ({ isOpen, onClose, curren
   const [showWelcome, setShowWelcome] = useState(true);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const textareaRef = useRef<HTMLInputElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   const aiModels: AIModel[] = [
@@ -111,14 +111,6 @@ const CopilotSidebar: React.FC<CopilotSidebarProps> = ({ isOpen, onClose, curren
       messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
     }
   }, [messages]);
-
-  // Auto-resize textarea
-  useEffect(() => {
-    if (textareaRef.current) {
-      textareaRef.current.style.height = 'auto';
-      textareaRef.current.style.height = Math.min(textareaRef.current.scrollHeight, 120) + 'px';
-    }
-  }, [query]);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -267,31 +259,16 @@ const CopilotSidebar: React.FC<CopilotSidebarProps> = ({ isOpen, onClose, curren
       <div className="flex-1 flex flex-col min-h-0">
         {/* Welcome Screen */}
         {showWelcome && messages.length === 0 && (
-          <div className="flex-1 flex flex-col items-center justify-center p-6 text-center">
+          <div className={`flex-1 flex flex-col items-center justify-center p-6 text-center ${themeClasses.bg}`}>
             <div className="w-16 h-16 bg-gradient-to-br from-blue-500 via-blue-600 to-indigo-600 rounded-2xl flex items-center justify-center shadow-lg mb-6">
               <Brain className="w-8 h-8 text-white" />
             </div>
             
             <h2 className={`text-xl font-semibold ${themeClasses.text} mb-3`}>Ask Copilot</h2>
             
-            <p className={`text-sm ${themeClasses.textSecondary} mb-6 leading-relaxed`}>
+            <p className={`text-sm ${themeClasses.textSecondary} mb-6 leading-relaxed max-w-xs`}>
               Copilot is powered by AI, so mistakes are possible. Review output carefully before use.
             </p>
-            
-            <div className={`text-sm ${themeClasses.textSecondary} space-y-2`}>
-              <div className="flex items-center justify-center space-x-2">
-                <Paperclip className="w-4 h-4" />
-                <span>or type # to attach context</span>
-              </div>
-              <div className="flex items-center justify-center space-x-2">
-                <span className="text-lg">@</span>
-                <span>to chat with extensions</span>
-              </div>
-              <div className="flex items-center justify-center space-x-2">
-                <span className="text-lg">/</span>
-                <span>to use commands</span>
-              </div>
-            </div>
           </div>
         )}
 
@@ -386,7 +363,7 @@ const CopilotSidebar: React.FC<CopilotSidebarProps> = ({ isOpen, onClose, curren
         )}
 
         {/* Input Area - Compact Design */}
-        <div className={`border-t ${themeClasses.border} p-4 flex-shrink-0`}>
+        <div className={`border-t ${themeClasses.border} p-4 flex-shrink-0 ${themeClasses.bg}`}>
           {/* Add Context Button */}
           <div className="mb-3">
             <button className={`flex items-center space-x-2 px-3 py-1.5 text-xs border rounded-md transition-all duration-200 ${themeClasses.input} ${themeClasses.border} ${themeClasses.surfaceHover}`}>
