@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Send, Loader2, X, Brain, Copy, Check, ChevronDown, Paperclip, Mic, Settings } from 'lucide-react';
+import { Send, Loader2, X, Brain, Copy, Check, ChevronDown, Paperclip, Mic } from 'lucide-react';
 
 interface CopilotSidebarProps {
   isOpen: boolean;
@@ -230,28 +230,28 @@ const CopilotSidebar: React.FC<CopilotSidebarProps> = ({ isOpen, onClose, curren
   const selectedModelInfo = aiModels.find(m => m.id === selectedModel);
 
   return (
-    <div className={`w-80 h-full flex flex-col ${themeClasses.bg} ${themeClasses.border} border-l`}>
+    <div className={`h-full flex flex-col ${themeClasses.bg} ${themeClasses.border} border-l`}>
       {/* Header */}
-      <div className={`px-4 py-3 border-b flex items-center justify-between ${themeClasses.border} flex-shrink-0`}>
-        <div className="flex items-center space-x-3">
+      <div className={`px-3 py-2 border-b flex items-center justify-between ${themeClasses.border} flex-shrink-0`}>
+        <div className="flex items-center space-x-2">
           <div className="relative">
-            <div className="w-8 h-8 bg-gradient-to-br from-blue-500 via-blue-600 to-indigo-600 rounded-lg flex items-center justify-center shadow-lg">
-              <Brain className="w-4 h-4 text-white" />
+            <div className="w-6 h-6 bg-gradient-to-br from-blue-500 via-blue-600 to-indigo-600 rounded-lg flex items-center justify-center shadow-lg">
+              <Brain className="w-3 h-3 text-white" />
             </div>
-            <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-400 rounded-full animate-pulse"></div>
+            <div className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
           </div>
           <div>
-            <h3 className={`font-semibold ${themeClasses.text} text-sm`}>Ask Copilot</h3>
-            <p className={`text-xs ${themeClasses.textSecondary}`}>AI-powered coding assistant</p>
+            <h3 className={`font-semibold ${themeClasses.text} text-xs`}>Ask Copilot</h3>
+            <p className={`text-xs ${themeClasses.textSecondary}`}>AI-powered assistant</p>
           </div>
         </div>
         
         <button
           onClick={onClose}
-          className={`p-1.5 ${themeClasses.surfaceHover} rounded-lg transition-all duration-200`}
+          className={`p-1 ${themeClasses.surfaceHover} rounded transition-all duration-200`}
           title="Close Copilot"
         >
-          <X className={`w-4 h-4 ${themeClasses.textSecondary}`} />
+          <X className={`w-3 h-3 ${themeClasses.textSecondary}`} />
         </button>
       </div>
 
@@ -259,14 +259,14 @@ const CopilotSidebar: React.FC<CopilotSidebarProps> = ({ isOpen, onClose, curren
       <div className="flex-1 flex flex-col min-h-0">
         {/* Welcome Screen */}
         {showWelcome && messages.length === 0 && (
-          <div className={`flex-1 flex flex-col items-center justify-center p-6 text-center ${themeClasses.bg}`}>
-            <div className="w-16 h-16 bg-gradient-to-br from-blue-500 via-blue-600 to-indigo-600 rounded-2xl flex items-center justify-center shadow-lg mb-6">
-              <Brain className="w-8 h-8 text-white" />
+          <div className={`flex-1 flex flex-col items-center justify-center p-4 text-center ${themeClasses.bg}`}>
+            <div className="w-12 h-12 bg-gradient-to-br from-blue-500 via-blue-600 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg mb-4">
+              <Brain className="w-6 h-6 text-white" />
             </div>
             
-            <h2 className={`text-xl font-semibold ${themeClasses.text} mb-3`}>Ask Copilot</h2>
+            <h2 className={`text-lg font-semibold ${themeClasses.text} mb-2`}>Ask Copilot</h2>
             
-            <p className={`text-sm ${themeClasses.textSecondary} mb-6 leading-relaxed max-w-xs`}>
+            <p className={`text-xs ${themeClasses.textSecondary} mb-4 leading-relaxed max-w-xs`}>
               Copilot is powered by AI, so mistakes are possible. Review output carefully before use.
             </p>
           </div>
@@ -274,47 +274,47 @@ const CopilotSidebar: React.FC<CopilotSidebarProps> = ({ isOpen, onClose, curren
 
         {/* Messages Container */}
         {!showWelcome && (
-          <div className={`flex-1 overflow-y-auto px-4 py-4 space-y-4 ${themeClasses.scrollbar} scrollbar-thin`}>
+          <div className={`flex-1 overflow-y-auto px-3 py-3 space-y-3 ${themeClasses.scrollbar} scrollbar-thin`}>
             {messages.map((message) => (
               <div
                 key={message.id}
                 className={`flex ${message.type === 'user' ? 'justify-end' : 'justify-start'}`}
               >
                 <div
-                  className={`max-w-[85%] rounded-2xl px-4 py-3 ${
+                  className={`max-w-[85%] rounded-xl px-3 py-2 ${
                     message.type === 'user'
                       ? themeClasses.userMessage
                       : `${themeClasses.assistantMessage} border`
                   } shadow-sm`}
                 >
                   {message.type === 'assistant' && (
-                    <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center justify-between mb-1">
                       <span className={`text-xs font-medium ${themeClasses.textSecondary}`}>
                         {selectedModelInfo?.name || 'AI Assistant'}
                       </span>
                       <button
                         onClick={() => copyToClipboard(message.content, message.id)}
-                        className={`p-1 ${themeClasses.surfaceHover} rounded transition-colors`}
+                        className={`p-0.5 ${themeClasses.surfaceHover} rounded transition-colors`}
                         title="Copy message"
                       >
                         {copiedMessageId === message.id ? (
-                          <Check className="w-3 h-3 text-green-500" />
+                          <Check className="w-2.5 h-2.5 text-green-500" />
                         ) : (
-                          <Copy className={`w-3 h-3 ${themeClasses.textSecondary}`} />
+                          <Copy className={`w-2.5 h-2.5 ${themeClasses.textSecondary}`} />
                         )}
                       </button>
                     </div>
                   )}
                   
-                  <div className="text-sm leading-relaxed">
+                  <div className="text-xs leading-relaxed">
                     {message.content.includes('```') ? (
-                      <div className="space-y-2">
+                      <div className="space-y-1">
                         {message.content.split('```').map((part, index) => {
                           if (index % 2 === 1) {
                             return (
                               <pre
                                 key={index}
-                                className={`${themeClasses.surface} p-3 rounded-lg text-xs font-mono overflow-x-auto border ${themeClasses.border}`}
+                                className={`${themeClasses.surface} p-2 rounded text-xs font-mono overflow-x-auto border ${themeClasses.border}`}
                               >
                                 <code>{part.trim()}</code>
                               </pre>
@@ -335,7 +335,7 @@ const CopilotSidebar: React.FC<CopilotSidebarProps> = ({ isOpen, onClose, curren
                     )}
                   </div>
                   
-                  <div className={`text-xs ${themeClasses.textSecondary} mt-2 opacity-70`}>
+                  <div className={`text-xs ${themeClasses.textSecondary} mt-1 opacity-70`}>
                     {message.timestamp.toLocaleTimeString([], { 
                       hour: '2-digit', 
                       minute: '2-digit' 
@@ -347,10 +347,10 @@ const CopilotSidebar: React.FC<CopilotSidebarProps> = ({ isOpen, onClose, curren
 
             {isLoading && (
               <div className="flex justify-start">
-                <div className={`${themeClasses.assistantMessage} border rounded-2xl px-4 py-3 shadow-sm`}>
-                  <div className="flex items-center space-x-3">
-                    <Loader2 className="w-4 h-4 text-blue-500 animate-spin" />
-                    <span className={`text-sm ${themeClasses.textSecondary}`}>
+                <div className={`${themeClasses.assistantMessage} border rounded-xl px-3 py-2 shadow-sm`}>
+                  <div className="flex items-center space-x-2">
+                    <Loader2 className="w-3 h-3 text-blue-500 animate-spin" />
+                    <span className={`text-xs ${themeClasses.textSecondary}`}>
                       {selectedModelInfo?.name || 'AI'} is thinking...
                     </span>
                   </div>
@@ -363,38 +363,32 @@ const CopilotSidebar: React.FC<CopilotSidebarProps> = ({ isOpen, onClose, curren
         )}
 
         {/* Input Area - Compact Design */}
-        <div className={`border-t ${themeClasses.border} p-4 flex-shrink-0 ${themeClasses.bg}`}>
+        <div className={`border-t ${themeClasses.border} p-3 flex-shrink-0 ${themeClasses.bg}`}>
           {/* Add Context Button */}
-          <div className="mb-3">
-            <button className={`flex items-center space-x-2 px-3 py-1.5 text-xs border rounded-md transition-all duration-200 ${themeClasses.input} ${themeClasses.border} ${themeClasses.surfaceHover}`}>
-              <Paperclip className="w-3 h-3" />
+          <div className="mb-2">
+            <button className={`flex items-center space-x-1.5 px-2 py-1 text-xs border rounded transition-all duration-200 ${themeClasses.input} ${themeClasses.border} ${themeClasses.surfaceHover}`}>
+              <Paperclip className="w-2.5 h-2.5" />
               <span>Add Context...</span>
             </button>
           </div>
 
-          {/* Main Input Bar */}
-          <div className={`flex items-center space-x-2 border rounded-lg p-2 ${themeClasses.border} ${themeClasses.surface}`}>
-            {/* Ask Button */}
-            <button className={`px-2 py-1 text-xs font-medium ${themeClasses.text} ${themeClasses.surfaceHover} rounded transition-all duration-200`}>
-              Ask
-            </button>
-
-            {/* Model Selector */}
+          {/* AI Agent Selector - Moved above prompt bar */}
+          <div className="mb-2">
             <div className="relative" ref={dropdownRef}>
               <button
                 onClick={() => setShowModelDropdown(!showModelDropdown)}
-                className={`flex items-center space-x-1 px-2 py-1 text-xs ${themeClasses.text} ${themeClasses.surfaceHover} rounded transition-all duration-200`}
+                className={`w-full flex items-center justify-between px-2 py-1.5 text-xs border rounded transition-all duration-200 ${themeClasses.input} ${themeClasses.border} ${themeClasses.surfaceHover}`}
               >
-                <span>{selectedModelInfo?.name || 'Claude Sonnet 3.5'}</span>
+                <span className={`font-medium ${themeClasses.text}`}>{selectedModelInfo?.name || 'Claude Sonnet 3.5'}</span>
                 <ChevronDown className={`w-3 h-3 transition-transform duration-200 ${showModelDropdown ? 'rotate-180' : ''}`} />
               </button>
 
               {showModelDropdown && (
-                <div className={`absolute bottom-full left-0 mb-2 w-64 border rounded-lg shadow-lg z-50 ${themeClasses.dropdown} ${themeClasses.border}`}>
-                  <div className="p-3">
-                    <h3 className={`text-sm font-medium ${themeClasses.text} mb-3 text-center`}>Copilot Models</h3>
+                <div className={`absolute bottom-full left-0 mb-1 w-full border rounded-lg shadow-lg z-50 ${themeClasses.dropdown} ${themeClasses.border}`}>
+                  <div className="p-2">
+                    <h3 className={`text-xs font-medium ${themeClasses.text} mb-2 text-center`}>Copilot Models</h3>
                     
-                    <div className="space-y-1">
+                    <div className="space-y-0.5">
                       {aiModels.map((model) => (
                         <button
                           key={model.id}
@@ -402,15 +396,15 @@ const CopilotSidebar: React.FC<CopilotSidebarProps> = ({ isOpen, onClose, curren
                             setSelectedModel(model.id);
                             setShowModelDropdown(false);
                           }}
-                          className={`w-full flex items-center justify-between px-3 py-2 text-sm rounded transition-all duration-200 ${
+                          className={`w-full flex items-center justify-between px-2 py-1.5 text-xs rounded transition-all duration-200 ${
                             selectedModel === model.id
                               ? 'bg-blue-600 text-white'
                               : `${themeClasses.surfaceHover} ${themeClasses.text}`
                           }`}
                         >
-                          <div className="flex items-center space-x-2">
+                          <div className="flex items-center space-x-1.5">
                             {selectedModel === model.id && (
-                              <Check className="w-3 h-3" />
+                              <Check className="w-2.5 h-2.5" />
                             )}
                             <span className="font-medium">{model.name}</span>
                           </div>
@@ -421,7 +415,7 @@ const CopilotSidebar: React.FC<CopilotSidebarProps> = ({ isOpen, onClose, curren
                       ))}
                     </div>
                     
-                    <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-600">
+                    <div className="flex items-center justify-between mt-2 pt-2 border-t border-gray-600">
                       <button className="text-xs text-blue-400 hover:text-blue-300 transition-colors">
                         Manage Models...
                       </button>
@@ -433,7 +427,10 @@ const CopilotSidebar: React.FC<CopilotSidebarProps> = ({ isOpen, onClose, curren
                 </div>
               )}
             </div>
+          </div>
 
+          {/* Main Input Bar */}
+          <div className={`flex items-center space-x-1.5 border rounded-lg p-1.5 ${themeClasses.border} ${themeClasses.surface}`}>
             {/* Input Field */}
             <input
               ref={textareaRef}
@@ -441,22 +438,15 @@ const CopilotSidebar: React.FC<CopilotSidebarProps> = ({ isOpen, onClose, curren
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               onKeyPress={handleKeyPress}
-              placeholder=""
-              className={`flex-1 bg-transparent text-sm focus:outline-none ${themeClasses.text}`}
+              placeholder="Ask Copilot..."
+              className={`flex-1 bg-transparent text-xs focus:outline-none ${themeClasses.text}`}
               disabled={isLoading}
             />
 
             {/* Action Buttons */}
-            <div className="flex items-center space-x-1">
+            <div className="flex items-center space-x-0.5">
               <button
-                className={`p-1.5 ${themeClasses.surfaceHover} rounded transition-all duration-200`}
-                title="Mention"
-              >
-                <span className="text-sm font-bold">@</span>
-              </button>
-              
-              <button
-                className={`p-1.5 ${themeClasses.surfaceHover} rounded transition-all duration-200`}
+                className={`p-1 ${themeClasses.surfaceHover} rounded transition-all duration-200`}
                 title="Voice input"
               >
                 <Mic className={`w-3 h-3 ${themeClasses.textSecondary}`} />
@@ -465,7 +455,7 @@ const CopilotSidebar: React.FC<CopilotSidebarProps> = ({ isOpen, onClose, curren
               <button
                 onClick={handleSendMessage}
                 disabled={!query.trim() || isLoading}
-                className={`p-1.5 ${themeClasses.surfaceHover} rounded transition-all duration-200`}
+                className={`p-1 ${themeClasses.surfaceHover} rounded transition-all duration-200`}
                 title="Send message"
               >
                 {isLoading ? (
@@ -473,13 +463,6 @@ const CopilotSidebar: React.FC<CopilotSidebarProps> = ({ isOpen, onClose, curren
                 ) : (
                   <Send className={`w-3 h-3 ${themeClasses.textSecondary}`} />
                 )}
-              </button>
-
-              <button
-                className={`p-1.5 ${themeClasses.surfaceHover} rounded transition-all duration-200`}
-                title="More options"
-              >
-                <ChevronDown className={`w-3 h-3 ${themeClasses.textSecondary}`} />
               </button>
             </div>
           </div>

@@ -168,15 +168,15 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle, onNewFile, isDar
     return items.map((item, index) => (
       <div key={index}>
         <div 
-          className={`flex items-center py-2 px-3 ${themeClasses.surfaceHover} cursor-pointer text-sm transition-all duration-200 rounded-lg mx-2 ${
-            level > 0 ? `ml-${level * 4}` : ''
+          className={`flex items-center py-1.5 px-2 ${themeClasses.surfaceHover} cursor-pointer text-xs transition-all duration-200 rounded mx-1 ${
+            level > 0 ? `ml-${level * 3}` : ''
           }`}
-          style={{ paddingLeft: `${12 + level * 16}px` }}
+          style={{ paddingLeft: `${8 + level * 12}px` }}
         >
           {item.type === 'folder' ? (
             <>
               <button 
-                className={`mr-2 p-0.5 ${themeClasses.surfaceHover} rounded transition-colors`}
+                className={`mr-1.5 p-0.5 ${themeClasses.surfaceHover} rounded transition-colors`}
                 onClick={() => {
                   if (item.name === 'src') setSrcExpanded(!srcExpanded);
                   if (item.name === 'public') setPublicExpanded(!publicExpanded);
@@ -184,22 +184,22 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle, onNewFile, isDar
                 }}
               >
                 {item.expanded ? (
-                  <ChevronDown className={`w-3 h-3 ${themeClasses.textSecondary}`} />
+                  <ChevronDown className={`w-2.5 h-2.5 ${themeClasses.textSecondary}`} />
                 ) : (
-                  <ChevronRight className={`w-3 h-3 ${themeClasses.textSecondary}`} />
+                  <ChevronRight className={`w-2.5 h-2.5 ${themeClasses.textSecondary}`} />
                 )}
               </button>
               {item.expanded ? (
-                <FolderOpen className={`w-4 h-4 ${themeClasses.accent} mr-3`} />
+                <FolderOpen className={`w-3 h-3 ${themeClasses.accent} mr-2`} />
               ) : (
-                <Folder className={`w-4 h-4 ${themeClasses.accent} mr-3`} />
+                <Folder className={`w-3 h-3 ${themeClasses.accent} mr-2`} />
               )}
               <span className={`${themeClasses.text} font-light`}>{item.name}</span>
             </>
           ) : (
             <>
-              <div className="w-4 mr-2"></div>
-              <span className="mr-3 text-sm">{item.icon}</span>
+              <div className="w-3 mr-1.5"></div>
+              <span className="mr-2 text-xs">{item.icon}</span>
               <span className={`${themeClasses.textSecondary} font-light`}>{item.name}</span>
             </>
           )}
@@ -216,15 +216,15 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle, onNewFile, isDar
   if (collapsed) {
     return (
       <div className={`w-16 border-r flex flex-col ${themeClasses.bg} ${themeClasses.border}`}>
-        <div className={`p-3 border-b ${themeClasses.border}`}>
+        <div className={`p-2 border-b ${themeClasses.border}`}>
           <button
             onClick={onToggle}
-            className={`p-2 ${themeClasses.surfaceHover} rounded-lg transition-all duration-200 w-full`}
+            className={`p-1.5 ${themeClasses.surfaceHover} rounded transition-all duration-200 w-full`}
           >
-            <File className={`w-5 h-5 ${themeClasses.textSecondary}`} />
+            <File className={`w-4 h-4 ${themeClasses.textSecondary}`} />
           </button>
         </div>
-        <div className="flex-1 flex flex-col items-center py-4 space-y-3">
+        <div className="flex-1 flex flex-col items-center py-3 space-y-2">
           <Logo 
             size="sm" 
             clickable 
@@ -232,20 +232,20 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle, onNewFile, isDar
             className="hover:scale-110 transition-transform duration-200"
             variant={isDarkMode ? 'white' : 'default'}
           />
-          <button className={`p-2 ${themeClasses.surfaceHover} rounded-lg transition-all duration-200`} title="Search">
-            <Search className={`w-5 h-5 ${themeClasses.textSecondary}`} />
+          <button className={`p-1.5 ${themeClasses.surfaceHover} rounded transition-all duration-200`} title="Search">
+            <Search className={`w-4 h-4 ${themeClasses.textSecondary}`} />
           </button>
-          <button className={`p-2 ${themeClasses.surfaceHover} rounded-lg transition-all duration-200`} title="Git">
-            <GitBranch className={`w-5 h-5 ${themeClasses.textSecondary}`} />
+          <button className={`p-1.5 ${themeClasses.surfaceHover} rounded transition-all duration-200`} title="Git">
+            <GitBranch className={`w-4 h-4 ${themeClasses.textSecondary}`} />
           </button>
-          <button className={`p-2 ${themeClasses.surfaceHover} rounded-lg transition-all duration-200`} title="Extensions">
-            <Package className={`w-5 h-5 ${themeClasses.textSecondary}`} />
+          <button className={`p-1.5 ${themeClasses.surfaceHover} rounded transition-all duration-200`} title="Extensions">
+            <Package className={`w-4 h-4 ${themeClasses.textSecondary}`} />
           </button>
-          <button className={`p-2 ${themeClasses.surfaceHover} rounded-lg transition-all duration-200`} title="Terminal">
-            <Terminal className={`w-5 h-5 ${themeClasses.textSecondary}`} />
+          <button className={`p-1.5 ${themeClasses.surfaceHover} rounded transition-all duration-200`} title="Terminal">
+            <Terminal className={`w-4 h-4 ${themeClasses.textSecondary}`} />
           </button>
-          <button className={`p-2 ${themeClasses.surfaceHover} rounded-lg transition-all duration-200`} title="Settings">
-            <Settings className={`w-5 h-5 ${themeClasses.textSecondary}`} />
+          <button className={`p-1.5 ${themeClasses.surfaceHover} rounded transition-all duration-200`} title="Settings">
+            <Settings className={`w-4 h-4 ${themeClasses.textSecondary}`} />
           </button>
         </div>
       </div>
@@ -255,10 +255,10 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle, onNewFile, isDar
   return (
     <div className={`flex flex-col h-full ${themeClasses.bg}`}>
       {/* Header */}
-      <div className={`p-4 border-b flex items-center justify-between ${themeClasses.border}`}>
+      <div className={`p-3 border-b flex items-center justify-between ${themeClasses.border}`}>
         <button 
           onClick={handleLogoClick}
-          className="flex items-center space-x-3 group"
+          className="flex items-center space-x-2 group"
         >
           <Logo 
             size="sm" 
@@ -266,27 +266,27 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle, onNewFile, isDar
             onClick={handleLogoClick}
             variant={isDarkMode ? 'white' : 'default'}
           />
-          <span className={`text-lg font-light ${themeClasses.text} group-hover:${themeClasses.textSecondary} transition-colors`}>
+          <span className={`text-sm font-light ${themeClasses.text} group-hover:${themeClasses.textSecondary} transition-colors`}>
             Explorer
           </span>
         </button>
         <div className="flex items-center space-x-1">
           <button 
             onClick={onNewFile}
-            className={`p-1.5 ${themeClasses.surfaceHover} rounded-lg transition-all duration-200`}
+            className={`p-1 ${themeClasses.surfaceHover} rounded transition-all duration-200`}
             title="New File"
           >
-            <Plus className={`w-4 h-4 ${themeClasses.textSecondary}`} />
+            <Plus className={`w-3 h-3 ${themeClasses.textSecondary}`} />
           </button>
-          <button className={`p-1.5 ${themeClasses.surfaceHover} rounded-lg transition-all duration-200`} title="More Actions">
-            <MoreHorizontal className={`w-4 h-4 ${themeClasses.textSecondary}`} />
+          <button className={`p-1 ${themeClasses.surfaceHover} rounded transition-all duration-200`} title="More Actions">
+            <MoreHorizontal className={`w-3 h-3 ${themeClasses.textSecondary}`} />
           </button>
           <button
             onClick={onToggle}
-            className={`p-1.5 ${themeClasses.surfaceHover} rounded-lg transition-all duration-200`}
+            className={`p-1 ${themeClasses.surfaceHover} rounded transition-all duration-200`}
             title="Collapse Sidebar"
           >
-            <X className={`w-4 h-4 ${themeClasses.textSecondary}`} />
+            <X className={`w-3 h-3 ${themeClasses.textSecondary}`} />
           </button>
         </div>
       </div>
@@ -294,34 +294,34 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle, onNewFile, isDar
       {/* Open Editors */}
       <div className={`border-b ${themeClasses.border}`}>
         <div 
-          className={`flex items-center justify-between p-4 ${themeClasses.surfaceHover} cursor-pointer transition-all duration-200`}
+          className={`flex items-center justify-between p-3 ${themeClasses.surfaceHover} cursor-pointer transition-all duration-200`}
           onClick={() => setOpenEditorsExpanded(!openEditorsExpanded)}
         >
           <div className="flex items-center">
             {openEditorsExpanded ? (
-              <ChevronDown className={`w-4 h-4 ${themeClasses.textSecondary} mr-2`} />
+              <ChevronDown className={`w-3 h-3 ${themeClasses.textSecondary} mr-1.5`} />
             ) : (
-              <ChevronRight className={`w-4 h-4 ${themeClasses.textSecondary} mr-2`} />
+              <ChevronRight className={`w-3 h-3 ${themeClasses.textSecondary} mr-1.5`} />
             )}
-            <span className={`text-sm font-medium ${themeClasses.textSecondary} uppercase tracking-wider`}>
+            <span className={`text-xs font-medium ${themeClasses.textSecondary} uppercase tracking-wider`}>
               Open Editors
             </span>
           </div>
-          <span className={`text-xs ${themeClasses.textSecondary} ${themeClasses.surface} px-2 py-1 rounded-full`}>
+          <span className={`text-xs ${themeClasses.textSecondary} ${themeClasses.surface} px-1.5 py-0.5 rounded-full`}>
             {openEditors.length}
           </span>
         </div>
         {openEditorsExpanded && (
-          <div className="pb-4">
+          <div className="pb-3">
             {openEditors.map((editor, index) => (
-              <div key={index} className={`flex items-center justify-between px-6 py-2 ${themeClasses.surfaceHover} cursor-pointer group transition-all duration-200 rounded-lg mx-2`}>
+              <div key={index} className={`flex items-center justify-between px-4 py-1.5 ${themeClasses.surfaceHover} cursor-pointer group transition-all duration-200 rounded mx-1`}>
                 <div className="flex items-center">
-                  <span className="mr-3 text-sm">{editor.icon}</span>
-                  <span className={`text-sm ${themeClasses.text} font-light`}>{editor.name}</span>
+                  <span className="mr-2 text-xs">{editor.icon}</span>
+                  <span className={`text-xs ${themeClasses.text} font-light`}>{editor.name}</span>
                 </div>
                 {editor.closable && (
-                  <button className={`opacity-0 group-hover:opacity-100 p-1 ${themeClasses.surfaceHover} rounded transition-all duration-200`}>
-                    <X className={`w-3 h-3 ${themeClasses.textSecondary}`} />
+                  <button className={`opacity-0 group-hover:opacity-100 p-0.5 ${themeClasses.surfaceHover} rounded transition-all duration-200`}>
+                    <X className={`w-2.5 h-2.5 ${themeClasses.textSecondary}`} />
                   </button>
                 )}
               </div>
@@ -333,55 +333,55 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle, onNewFile, isDar
       {/* File Explorer */}
       <div className="flex-1 overflow-y-auto">
         <div 
-          className={`flex items-center justify-between p-4 ${themeClasses.surfaceHover} cursor-pointer transition-all duration-200`}
+          className={`flex items-center justify-between p-3 ${themeClasses.surfaceHover} cursor-pointer transition-all duration-200`}
           onClick={() => setExplorerExpanded(!explorerExpanded)}
         >
           <div className="flex items-center">
             {explorerExpanded ? (
-              <ChevronDown className={`w-4 h-4 ${themeClasses.textSecondary} mr-2`} />
+              <ChevronDown className={`w-3 h-3 ${themeClasses.textSecondary} mr-1.5`} />
             ) : (
-              <ChevronRight className={`w-4 h-4 ${themeClasses.textSecondary} mr-2`} />
+              <ChevronRight className={`w-3 h-3 ${themeClasses.textSecondary} mr-1.5`} />
             )}
-            <span className={`text-sm font-medium ${themeClasses.textSecondary} uppercase tracking-wider`}>
+            <span className={`text-xs font-medium ${themeClasses.textSecondary} uppercase tracking-wider`}>
               Olive Project
             </span>
           </div>
-          <span className={`text-xs ${themeClasses.textSecondary} ${themeClasses.surface} px-2 py-1 rounded-full`}>
+          <span className={`text-xs ${themeClasses.textSecondary} ${themeClasses.surface} px-1.5 py-0.5 rounded-full`}>
             {fileStructure.length}
           </span>
         </div>
         {explorerExpanded && (
-          <div className="pb-6">
+          <div className="pb-4">
             {renderFileTree(fileStructure)}
           </div>
         )}
       </div>
 
       {/* Sidebar Actions */}
-      <div className={`border-t p-4 space-y-2 ${themeClasses.border}`}>
-        <button className={`flex items-center w-full px-4 py-2 ${themeClasses.surfaceHover} rounded-lg transition-all duration-200 text-sm font-light`}>
-          <Search className={`w-4 h-4 ${themeClasses.textSecondary} mr-3`} />
+      <div className={`border-t p-3 space-y-1.5 ${themeClasses.border}`}>
+        <button className={`flex items-center w-full px-3 py-1.5 ${themeClasses.surfaceHover} rounded transition-all duration-200 text-xs font-light`}>
+          <Search className={`w-3 h-3 ${themeClasses.textSecondary} mr-2`} />
           <span className={themeClasses.text}>Search Files</span>
         </button>
         
-        <button className={`flex items-center w-full px-4 py-2 ${themeClasses.surfaceHover} rounded-lg transition-all duration-200 text-sm font-light`}>
-          <GitBranch className={`w-4 h-4 ${themeClasses.textSecondary} mr-3`} />
+        <button className={`flex items-center w-full px-3 py-1.5 ${themeClasses.surfaceHover} rounded transition-all duration-200 text-xs font-light`}>
+          <GitBranch className={`w-3 h-3 ${themeClasses.textSecondary} mr-2`} />
           <span className={themeClasses.text}>Source Control</span>
         </button>
         
-        <button className={`flex items-center w-full px-4 py-2 ${themeClasses.surfaceHover} rounded-lg transition-all duration-200 text-sm font-light`}>
-          <Package className={`w-4 h-4 ${themeClasses.textSecondary} mr-3`} />
+        <button className={`flex items-center w-full px-3 py-1.5 ${themeClasses.surfaceHover} rounded transition-all duration-200 text-xs font-light`}>
+          <Package className={`w-3 h-3 ${themeClasses.textSecondary} mr-2`} />
           <span className={themeClasses.text}>Extensions</span>
         </button>
       </div>
 
       {/* Bottom Actions */}
-      <div className={`border-t p-4 ${themeClasses.border}`}>
+      <div className={`border-t p-3 ${themeClasses.border}`}>
         <button
           onClick={handleLogoClick}
-          className={`flex items-center px-4 py-3 ${themeClasses.surfaceHover} rounded-full transition-all duration-200 text-sm font-light w-full`}
+          className={`flex items-center px-3 py-2 ${themeClasses.surfaceHover} rounded-full transition-all duration-200 text-xs font-light w-full`}
         >
-          <Home className={`w-4 h-4 ${themeClasses.textSecondary} mr-3`} />
+          <Home className={`w-3 h-3 ${themeClasses.textSecondary} mr-2`} />
           <span className={themeClasses.text}>Back to Home</span>
         </button>
       </div>

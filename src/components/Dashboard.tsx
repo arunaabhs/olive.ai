@@ -7,13 +7,17 @@ import Terminal from './Terminal';
 
 const Dashboard: React.FC = () => {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [sidebarWidth, setSidebarWidth] = useState(256); // Reduced from 320 (20% reduction)
   const [copilotOpen, setCopilotOpen] = useState(false);
+  const [copilotWidth, setCopilotWidth] = useState(320);
   const [terminalOpen, setTerminalOpen] = useState(false);
   const [terminalMinimized, setTerminalMinimized] = useState(false);
+  const [terminalHeight, setTerminalHeight] = useState(384);
   const [currentCode, setCurrentCode] = useState('');
   const [activeTab, setActiveTab] = useState('hello.js');
   const [openTabs, setOpenTabs] = useState(['hello.js', 'example.py', 'sample.html']);
   const [isDarkMode, setIsDarkMode] = useState(false);
+  const [isResizing, setIsResizing] = useState<'sidebar' | 'copilot' | 'terminal' | null>(null);
   
   const editorRef = useRef<any>(null);
 
@@ -69,6 +73,47 @@ const Dashboard: React.FC = () => {
     setIsDarkMode(!isDarkMode);
   };
 
+  // Mouse handlers for resizing
+  const handleMouseDown = (type: 'sidebar' | 'copilot' | 'terminal') => (e: React.MouseEvent) => {
+    e.preventDefault();
+    setIsResizing(type);
+  };
+
+  const handleMouseMove = (e: MouseEvent) => {
+    if (!isResizing) return;
+
+    if (isResizing === 'sidebar') {
+      const newWidth = Math.max(200, Math.min(500, e.clientX));
+      setSidebarWidth(newWidth);
+    } else if (isResizing === 'copilot') {
+      const newWidth = Math.max(280, Math.min(600, window.innerWidth - e.clientX));
+      setCopilotWidth(newWidth);
+    } else if (isResizing === 'terminal') {
+      const newHeight = Math.max(200, Math.min(600, window.innerHeight - e.clientY));
+      setTerminalHeight(newHeight);
+    }
+  };
+
+  const handleMouseUp = () => {
+    setIsResizing(null);
+  };
+
+  React.useEffect(() => {
+    if (isResizing) {
+      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mouseup', handleMouseUp);
+      document.body.style.cursor = isResizing === 'terminal' ? 'ns-resize' : 'ew-resize';
+      document.body.style.userSelect = 'none';
+
+      return () => {
+        document.removeEventListener('mousemove', handleMouseMove);
+        document.removeEventListener('mouseup', handleMouseUp);
+        document.body.style.cursor = '';
+        document.body.style.userSelect = '';
+      };
+    }
+  }, [isResizing]);
+
   const themeClasses = isDarkMode ? {
     bg: 'bg-gray-900',
     border: 'border-gray-700',
@@ -85,14 +130,27 @@ const Dashboard: React.FC = () => {
 
   return (
     <div className={`h-screen flex ${themeClasses.bg}`}>
-      {/* Sidebar */}
-      <div className={`${sidebarCollapsed ? 'w-16' : 'w-80'} flex-shrink-0 ${themeClasses.surface} ${themeClasses.border} border-r`}>
-        <Sidebar 
-          collapsed={sidebarCollapsed} 
-          onToggle={() => setSidebarCollapsed(!sidebarCollapsed)}
-          onNewFile={handleNewFile}
-          isDarkMode={isDarkMode}
-        />
+      {/* Sidebar with resize handle */}
+      <div className="flex flex-shrink-0">
+        <div 
+          className={`${themeClasses.surface} ${themeClasses.border} border-r`}
+          style={{ width: sidebarCollapsed ? '64px' : `${sidebarWidth}px` }}
+        >
+          <Sidebar 
+            collapsed={sidebarCollapsed} 
+            onToggle={() => setSidebarCollapsed(!sidebarCollapsed)}
+            onNewFile={handleNewFile}
+            isDarkMode={isDarkMode}
+          />
+        </div>
+        
+        {/* Sidebar resize handle */}
+        {!sidebarCollapsed && (
+          <div
+            className={`w-1 cursor-ew-resize ${themeClasses.border} border-r hover:bg-blue-500 transition-colors`}
+            onMouseDown={handleMouseDown('sidebar')}
+          />
+        )}
       </div>
       
       {/* Main Content Area */}
@@ -123,28 +181,49 @@ const Dashboard: React.FC = () => {
             />
           </div>
 
-          {/* Copilot Sidebar - Fixed width when open */}
+          {/* Copilot Sidebar with resize handle */}
           {copilotOpen && (
-            <CopilotSidebar 
-              isOpen={copilotOpen}
-              onClose={() => setCopilotOpen(false)}
-              currentCode={handleGetCurrentCode()}
-              isDarkMode={isDarkMode}
-            />
+            <div className="flex flex-shrink-0">
+              {/* Copilot resize handle */}
+              <div
+                className={`w-1 cursor-ew-resize ${themeClasses.border} border-l hover:bg-blue-500 transition-colors`}
+                onMouseDown={handleMouseDown('copilot')}
+              />
+              
+              <div style={{ width: `${copilotWidth}px` }}>
+                <CopilotSidebar 
+                  isOpen={copilotOpen}
+                  onClose={() => setCopilotOpen(false)}
+                  currentCode={handleGetCurrentCode()}
+                  isDarkMode={isDarkMode}
+                />
+              </div>
+            </div>
           )}
         </div>
         
-        {/* Terminal */}
+        {/* Terminal with resize handle */}
         {terminalOpen && (
-          <div className={`${terminalMinimized ? 'h-12' : 'h-96'} flex-shrink-0 border-t ${themeClasses.border}`}>
-            <Terminal
-              isOpen={terminalOpen}
-              onClose={() => setTerminalOpen(false)}
-              onToggleSize={() => setTerminalMinimized(!terminalMinimized)}
-              isMinimized={terminalMinimized}
-              onRunCode={handleRunCode}
-              isDarkMode={isDarkMode}
+          <div className="flex flex-col flex-shrink-0">
+            {/* Terminal resize handle */}
+            <div
+              className={`h-1 cursor-ns-resize ${themeClasses.border} border-t hover:bg-blue-500 transition-colors`}
+              onMouseDown={handleMouseDown('terminal')}
             />
+            
+            <div 
+              className={`flex-shrink-0 border-t ${themeClasses.border}`}
+              style={{ height: terminalMinimized ? '48px' : `${terminalHeight}px` }}
+            >
+              <Terminal
+                isOpen={terminalOpen}
+                onClose={() => setTerminalOpen(false)}
+                onToggleSize={() => setTerminalMinimized(!terminalMinimized)}
+                isMinimized={terminalMinimized}
+                onRunCode={handleRunCode}
+                isDarkMode={isDarkMode}
+              />
+            </div>
           </div>
         )}
       </div>
