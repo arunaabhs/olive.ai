@@ -278,58 +278,18 @@ const CopilotSidebar: React.FC<CopilotSidebarProps> = ({ isOpen, onClose, curren
               Copilot is powered by AI, so mistakes are possible. Review output carefully before use.
             </p>
             
-            <div className={`text-sm ${themeClasses.textSecondary} space-y-2 mb-8`}>
-              <div className="flex items-center space-x-2">
+            <div className={`text-sm ${themeClasses.textSecondary} space-y-2`}>
+              <div className="flex items-center justify-center space-x-2">
                 <Paperclip className="w-4 h-4" />
                 <span>or type # to attach context</span>
               </div>
-              <div className="flex items-center space-x-2">
+              <div className="flex items-center justify-center space-x-2">
                 <span className="text-lg">@</span>
                 <span>to chat with extensions</span>
               </div>
-              <div className="flex items-center space-x-2">
+              <div className="flex items-center justify-center space-x-2">
                 <span className="text-lg">/</span>
                 <span>to use commands</span>
-              </div>
-            </div>
-
-            {/* Model Selection */}
-            <div className="w-full">
-              <div className={`border rounded-lg p-4 ${themeClasses.border} ${themeClasses.surface}`}>
-                <h3 className={`text-sm font-medium ${themeClasses.text} mb-3`}>Copilot Models</h3>
-                
-                <div className="space-y-2">
-                  {aiModels.map((model) => (
-                    <div
-                      key={model.id}
-                      onClick={() => setSelectedModel(model.id)}
-                      className={`flex items-center justify-between p-2 rounded cursor-pointer transition-all duration-200 ${
-                        selectedModel === model.id
-                          ? 'bg-blue-600 text-white'
-                          : `${themeClasses.surfaceHover} ${themeClasses.text}`
-                      }`}
-                    >
-                      <div className="flex items-center space-x-2">
-                        {selectedModel === model.id && (
-                          <Check className="w-4 h-4" />
-                        )}
-                        <span className="text-sm font-medium">{model.name}</span>
-                      </div>
-                      <span className={`text-xs ${selectedModel === model.id ? 'text-blue-100' : themeClasses.textSecondary}`}>
-                        {model.speed}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-                
-                <div className="flex items-center justify-between mt-4 pt-3 border-t border-gray-600">
-                  <button className="text-sm text-blue-400 hover:text-blue-300 transition-colors">
-                    Manage Models...
-                  </button>
-                  <button className="text-sm text-blue-400 hover:text-blue-300 transition-colors">
-                    Add Premium Models
-                  </button>
-                </div>
               </div>
             </div>
           </div>
@@ -425,99 +385,124 @@ const CopilotSidebar: React.FC<CopilotSidebarProps> = ({ isOpen, onClose, curren
           </div>
         )}
 
-        {/* Input Area */}
+        {/* Input Area - Compact Design */}
         <div className={`border-t ${themeClasses.border} p-4 flex-shrink-0`}>
-          {/* Model Selector */}
+          {/* Add Context Button */}
           <div className="mb-3">
+            <button className={`flex items-center space-x-2 px-3 py-1.5 text-xs border rounded-md transition-all duration-200 ${themeClasses.input} ${themeClasses.border} ${themeClasses.surfaceHover}`}>
+              <Paperclip className="w-3 h-3" />
+              <span>Add Context...</span>
+            </button>
+          </div>
+
+          {/* Main Input Bar */}
+          <div className={`flex items-center space-x-2 border rounded-lg p-2 ${themeClasses.border} ${themeClasses.surface}`}>
+            {/* Ask Button */}
+            <button className={`px-2 py-1 text-xs font-medium ${themeClasses.text} ${themeClasses.surfaceHover} rounded transition-all duration-200`}>
+              Ask
+            </button>
+
+            {/* Model Selector */}
             <div className="relative" ref={dropdownRef}>
               <button
                 onClick={() => setShowModelDropdown(!showModelDropdown)}
-                className={`flex items-center justify-between w-full px-3 py-2 text-sm border rounded-lg transition-all duration-200 ${themeClasses.input} ${themeClasses.border}`}
+                className={`flex items-center space-x-1 px-2 py-1 text-xs ${themeClasses.text} ${themeClasses.surfaceHover} rounded transition-all duration-200`}
               >
-                <div className="flex items-center space-x-2">
-                  <Brain className="w-4 h-4 text-blue-500" />
-                  <span>{selectedModelInfo?.name || 'Select Model'}</span>
-                </div>
-                <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${showModelDropdown ? 'rotate-180' : ''}`} />
+                <span>{selectedModelInfo?.name || 'Claude Sonnet 3.5'}</span>
+                <ChevronDown className={`w-3 h-3 transition-transform duration-200 ${showModelDropdown ? 'rotate-180' : ''}`} />
               </button>
 
               {showModelDropdown && (
-                <div className={`absolute bottom-full left-0 right-0 mb-2 border rounded-lg shadow-lg z-50 ${themeClasses.dropdown} ${themeClasses.border}`}>
-                  <div className="py-2">
-                    {aiModels.map((model) => (
-                      <button
-                        key={model.id}
-                        onClick={() => {
-                          setSelectedModel(model.id);
-                          setShowModelDropdown(false);
-                        }}
-                        className={`w-full px-4 py-2 text-left transition-all duration-200 ${
-                          selectedModel === model.id
-                            ? 'bg-blue-600 text-white'
-                            : `${themeClasses.surfaceHover} ${themeClasses.text}`
-                        }`}
-                      >
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <div className="text-sm font-medium">{model.name}</div>
-                            <div className={`text-xs ${selectedModel === model.id ? 'text-blue-100' : themeClasses.textSecondary}`}>
-                              {model.description}
-                            </div>
+                <div className={`absolute bottom-full left-0 mb-2 w-64 border rounded-lg shadow-lg z-50 ${themeClasses.dropdown} ${themeClasses.border}`}>
+                  <div className="p-3">
+                    <h3 className={`text-sm font-medium ${themeClasses.text} mb-3 text-center`}>Copilot Models</h3>
+                    
+                    <div className="space-y-1">
+                      {aiModels.map((model) => (
+                        <button
+                          key={model.id}
+                          onClick={() => {
+                            setSelectedModel(model.id);
+                            setShowModelDropdown(false);
+                          }}
+                          className={`w-full flex items-center justify-between px-3 py-2 text-sm rounded transition-all duration-200 ${
+                            selectedModel === model.id
+                              ? 'bg-blue-600 text-white'
+                              : `${themeClasses.surfaceHover} ${themeClasses.text}`
+                          }`}
+                        >
+                          <div className="flex items-center space-x-2">
+                            {selectedModel === model.id && (
+                              <Check className="w-3 h-3" />
+                            )}
+                            <span className="font-medium">{model.name}</span>
                           </div>
                           <span className={`text-xs ${selectedModel === model.id ? 'text-blue-100' : themeClasses.textSecondary}`}>
                             {model.speed}
                           </span>
-                        </div>
+                        </button>
+                      ))}
+                    </div>
+                    
+                    <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-600">
+                      <button className="text-xs text-blue-400 hover:text-blue-300 transition-colors">
+                        Manage Models...
                       </button>
-                    ))}
+                      <button className="text-xs text-blue-400 hover:text-blue-300 transition-colors">
+                        Add Premium Models
+                      </button>
+                    </div>
                   </div>
                 </div>
               )}
             </div>
-          </div>
 
-          {/* Input Field */}
-          <div className="flex items-end space-x-3">
-            <div className="flex-1">
-              <textarea
-                ref={textareaRef}
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                onKeyPress={handleKeyPress}
-                placeholder="Ask Copilot anything about your code..."
-                className={`w-full resize-none border rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500/50 transition-all duration-200 ${themeClasses.input}`}
-                rows={1}
-                disabled={isLoading}
-                style={{ minHeight: '44px', maxHeight: '120px' }}
-              />
-            </div>
-            
-            <div className="flex items-center space-x-2">
+            {/* Input Field */}
+            <input
+              ref={textareaRef}
+              type="text"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              onKeyPress={handleKeyPress}
+              placeholder=""
+              className={`flex-1 bg-transparent text-sm focus:outline-none ${themeClasses.text}`}
+              disabled={isLoading}
+            />
+
+            {/* Action Buttons */}
+            <div className="flex items-center space-x-1">
               <button
-                className={`p-2 ${themeClasses.surfaceHover} rounded-lg transition-all duration-200`}
-                title="Attach file"
+                className={`p-1.5 ${themeClasses.surfaceHover} rounded transition-all duration-200`}
+                title="Mention"
               >
-                <Paperclip className={`w-4 h-4 ${themeClasses.textSecondary}`} />
+                <span className="text-sm font-bold">@</span>
               </button>
               
               <button
-                className={`p-2 ${themeClasses.surfaceHover} rounded-lg transition-all duration-200`}
+                className={`p-1.5 ${themeClasses.surfaceHover} rounded transition-all duration-200`}
                 title="Voice input"
               >
-                <Mic className={`w-4 h-4 ${themeClasses.textSecondary}`} />
+                <Mic className={`w-3 h-3 ${themeClasses.textSecondary}`} />
               </button>
               
               <button
                 onClick={handleSendMessage}
                 disabled={!query.trim() || isLoading}
-                className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white p-2 rounded-lg transition-all duration-200 flex items-center justify-center shadow-lg hover:shadow-xl flex-shrink-0"
+                className={`p-1.5 ${themeClasses.surfaceHover} rounded transition-all duration-200`}
                 title="Send message"
               >
                 {isLoading ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <Loader2 className="w-3 h-3 animate-spin" />
                 ) : (
-                  <Send className="w-4 h-4" />
+                  <Send className={`w-3 h-3 ${themeClasses.textSecondary}`} />
                 )}
+              </button>
+
+              <button
+                className={`p-1.5 ${themeClasses.surfaceHover} rounded transition-all duration-200`}
+                title="More options"
+              >
+                <ChevronDown className={`w-3 h-3 ${themeClasses.textSecondary}`} />
               </button>
             </div>
           </div>
