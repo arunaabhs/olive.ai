@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Send, Loader2, X, Brain, Copy, Check } from 'lucide-react';
+import { Send, Loader2, X, Brain, Copy, Check, ChevronDown, Paperclip, Mic, Settings } from 'lucide-react';
 
 interface CopilotSidebarProps {
   isOpen: boolean;
@@ -15,22 +15,64 @@ interface Message {
   timestamp: Date;
 }
 
+interface AIModel {
+  id: string;
+  name: string;
+  provider: string;
+  speed: string;
+  description: string;
+}
+
 const CopilotSidebar: React.FC<CopilotSidebarProps> = ({ isOpen, onClose, currentCode, isDarkMode = false }) => {
   const [query, setQuery] = useState('');
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: '1',
-      type: 'assistant',
-      content: 'Hello! I\'m Olive.AI, your intelligent coding assistant. I can help you with code explanations, debugging, optimizations, and much more. What would you like to work on today?',
-      timestamp: new Date()
-    }
-  ]);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null);
-  const [showDappierWidget, setShowDappierWidget] = useState(false);
+  const [selectedModel, setSelectedModel] = useState('claude-sonnet-3.5');
+  const [showModelDropdown, setShowModelDropdown] = useState(false);
+  const [showWelcome, setShowWelcome] = useState(true);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  const aiModels: AIModel[] = [
+    {
+      id: 'claude-sonnet-3.5',
+      name: 'Claude Sonnet 3.5',
+      provider: 'Anthropic',
+      speed: '1x',
+      description: 'Best for complex reasoning and code analysis'
+    },
+    {
+      id: 'gemini-2.0-flash',
+      name: 'Gemini 2.0 Flash',
+      provider: 'Google',
+      speed: '1x',
+      description: 'Fast and efficient for general tasks'
+    },
+    {
+      id: 'gpt-4.1',
+      name: 'GPT-4.1',
+      provider: 'OpenAI',
+      speed: '1x',
+      description: 'Advanced reasoning and creativity'
+    },
+    {
+      id: 'gpt-4o',
+      name: 'GPT-4o',
+      provider: 'OpenAI',
+      speed: '1x',
+      description: 'Optimized for speed and efficiency'
+    },
+    {
+      id: 'o3-mini',
+      name: 'o3-mini',
+      provider: 'OpenAI',
+      speed: '1x',
+      description: 'Lightweight and fast responses'
+    }
+  ];
 
   const themeClasses = isDarkMode ? {
     bg: 'bg-gray-900',
@@ -40,9 +82,10 @@ const CopilotSidebar: React.FC<CopilotSidebarProps> = ({ isOpen, onClose, curren
     surface: 'bg-gray-800',
     surfaceHover: 'hover:bg-gray-700',
     input: 'bg-gray-800 border-gray-600 text-gray-100 placeholder-gray-500',
-    userMessage: 'bg-emerald-600 text-white',
+    userMessage: 'bg-blue-600 text-white',
     assistantMessage: 'bg-gray-800 text-gray-100 border-gray-700',
-    scrollbar: 'scrollbar-thumb-gray-600 scrollbar-track-gray-800'
+    scrollbar: 'scrollbar-thumb-gray-600 scrollbar-track-gray-800',
+    dropdown: 'bg-gray-800 border-gray-600'
   } : {
     bg: 'bg-white',
     border: 'border-gray-200',
@@ -51,9 +94,10 @@ const CopilotSidebar: React.FC<CopilotSidebarProps> = ({ isOpen, onClose, curren
     surface: 'bg-gray-50',
     surfaceHover: 'hover:bg-gray-100',
     input: 'bg-white border-gray-300 text-gray-900 placeholder-gray-500',
-    userMessage: 'bg-emerald-600 text-white',
+    userMessage: 'bg-blue-600 text-white',
     assistantMessage: 'bg-white text-gray-900 border-gray-200',
-    scrollbar: 'scrollbar-thumb-gray-300 scrollbar-track-gray-100'
+    scrollbar: 'scrollbar-thumb-gray-300 scrollbar-track-gray-100',
+    dropdown: 'bg-white border-gray-200'
   };
 
   // Don't render anything if not open
@@ -76,6 +120,18 @@ const CopilotSidebar: React.FC<CopilotSidebarProps> = ({ isOpen, onClose, curren
     }
   }, [query]);
 
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setShowModelDropdown(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
   const handleSendMessage = async () => {
     if (!query.trim()) return;
 
@@ -89,6 +145,7 @@ const CopilotSidebar: React.FC<CopilotSidebarProps> = ({ isOpen, onClose, curren
     setMessages(prev => [...prev, userMessage]);
     setQuery('');
     setIsLoading(true);
+    setShowWelcome(false);
 
     try {
       // Simulate AI response
@@ -97,7 +154,7 @@ const CopilotSidebar: React.FC<CopilotSidebarProps> = ({ isOpen, onClose, curren
       const assistantMessage: Message = {
         id: (Date.now() + 1).toString(),
         type: 'assistant',
-        content: generateMockResponse(userMessage.content, currentCode),
+        content: generateMockResponse(userMessage.content, currentCode, selectedModel),
         timestamp: new Date()
       };
 
@@ -109,22 +166,25 @@ const CopilotSidebar: React.FC<CopilotSidebarProps> = ({ isOpen, onClose, curren
     }
   };
 
-  const generateMockResponse = (userQuery: string, code: string): string => {
+  const generateMockResponse = (userQuery: string, code: string, model: string): string => {
+    const selectedModelInfo = aiModels.find(m => m.id === model);
+    const modelName = selectedModelInfo?.name || 'AI Assistant';
+    
     const query = userQuery.toLowerCase();
     
     if (query.includes('explain') || query.includes('what does')) {
-      return `I can see you're asking about code explanation. Based on the current code context, here's what I can tell you:\n\n\`\`\`javascript\n// This appears to be a React component\n// with modern hooks and TypeScript\n\`\`\`\n\nThe code structure follows React best practices with proper component composition and state management. Would you like me to explain any specific part in more detail?`;
+      return `I'm ${modelName}, and I can help explain this code. Based on the current context, I can see you're working with a React application. The code structure follows modern React patterns with TypeScript integration.\n\nWould you like me to explain any specific part in more detail?`;
     }
     
     if (query.includes('optimize') || query.includes('improve')) {
-      return `Here are some optimization suggestions for your code:\n\n1. **Performance**: Consider using React.memo() for components that don't need frequent re-renders\n2. **Code Structure**: Extract custom hooks for reusable logic\n3. **TypeScript**: Add more specific type definitions\n\n\`\`\`typescript\n// Example optimization\nconst MemoizedComponent = React.memo(YourComponent);\n\`\`\`\n\nWould you like me to elaborate on any of these suggestions?`;
+      return `As ${modelName}, here are my optimization suggestions:\n\n1. **Performance**: Consider using React.memo() for components that don't need frequent re-renders\n2. **Code Structure**: Extract custom hooks for reusable logic\n3. **TypeScript**: Add more specific type definitions\n\nWould you like me to elaborate on any of these suggestions?`;
     }
     
     if (query.includes('bug') || query.includes('error') || query.includes('fix')) {
-      return `I can help you debug this issue. Common problems I notice:\n\n• **State Management**: Ensure state updates are properly handled\n• **Dependencies**: Check if all dependencies are correctly listed\n• **Type Safety**: Verify TypeScript types match expected values\n\nCan you share the specific error message you're seeing?`;
+      return `I'm ${modelName} and I can help debug this issue. Common problems I notice:\n\n• **State Management**: Ensure state updates are properly handled\n• **Dependencies**: Check if all dependencies are correctly listed\n• **Type Safety**: Verify TypeScript types match expected values\n\nCan you share the specific error message you're seeing?`;
     }
     
-    return `I understand you're asking about "${userQuery}". I'm here to help with:\n\n• **Code Explanation**: Breaking down complex logic\n• **Debugging**: Finding and fixing issues\n• **Optimization**: Improving performance and structure\n• **Best Practices**: Following modern development standards\n\nCould you provide more specific details about what you'd like assistance with?`;
+    return `Hello! I'm ${modelName}. I understand you're asking about "${userQuery}". I'm here to help with:\n\n• **Code Explanation**: Breaking down complex logic\n• **Debugging**: Finding and fixing issues\n• **Optimization**: Improving performance and structure\n• **Best Practices**: Following modern development standards\n\nCould you provide more specific details about what you'd like assistance with?`;
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -175,182 +235,293 @@ const CopilotSidebar: React.FC<CopilotSidebarProps> = ({ isOpen, onClose, curren
     });
   };
 
+  const selectedModelInfo = aiModels.find(m => m.id === selectedModel);
+
   return (
     <div className={`w-80 h-full flex flex-col ${themeClasses.bg} ${themeClasses.border} border-l`}>
       {/* Header */}
       <div className={`px-4 py-3 border-b flex items-center justify-between ${themeClasses.border} flex-shrink-0`}>
         <div className="flex items-center space-x-3">
           <div className="relative">
-            <div className="w-8 h-8 bg-gradient-to-br from-emerald-500 via-emerald-600 to-green-600 rounded-lg flex items-center justify-center shadow-lg">
+            <div className="w-8 h-8 bg-gradient-to-br from-blue-500 via-blue-600 to-indigo-600 rounded-lg flex items-center justify-center shadow-lg">
               <Brain className="w-4 h-4 text-white" />
             </div>
             <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-400 rounded-full animate-pulse"></div>
           </div>
           <div>
-            <h3 className={`font-semibold ${themeClasses.text} text-sm`}>olive.ai</h3>
-            <p className={`text-xs ${themeClasses.textSecondary}`}>Intelligent Coding Assistant</p>
+            <h3 className={`font-semibold ${themeClasses.text} text-sm`}>Ask Copilot</h3>
+            <p className={`text-xs ${themeClasses.textSecondary}`}>AI-powered coding assistant</p>
           </div>
         </div>
         
-        <div className="flex items-center space-x-2">
-          <button
-            onClick={() => setShowDappierWidget(!showDappierWidget)}
-            className={`px-3 py-1.5 text-xs rounded-full transition-all duration-200 ${
-              showDappierWidget 
-                ? 'bg-emerald-600 text-white' 
-                : `${themeClasses.surface} ${themeClasses.surfaceHover} ${themeClasses.textSecondary}`
-            }`}
-            title="Toggle Advanced AI"
-          >
-            {showDappierWidget ? 'Basic' : 'Advanced'}
-          </button>
-          <button
-            onClick={onClose}
-            className={`p-1.5 ${themeClasses.surfaceHover} rounded-lg transition-all duration-200`}
-            title="Close olive.ai"
-          >
-            <X className={`w-4 h-4 ${themeClasses.textSecondary}`} />
-          </button>
-        </div>
+        <button
+          onClick={onClose}
+          className={`p-1.5 ${themeClasses.surfaceHover} rounded-lg transition-all duration-200`}
+          title="Close Copilot"
+        >
+          <X className={`w-4 h-4 ${themeClasses.textSecondary}`} />
+        </button>
       </div>
 
       {/* Content Area */}
       <div className="flex-1 flex flex-col min-h-0">
-        {showDappierWidget ? (
-          /* Dappier AI Widget */
-          <div className="flex-1 p-4">
-            <div className={`h-full rounded-lg border ${themeClasses.border} ${themeClasses.surface} overflow-hidden`}>
-              <div id="dappier-ask-ai-widget" className="h-full">
-                <dappier-ask-ai-widget 
-                  widgetId="wd_01jysrskrhf4mv60et0mzk11wd" 
-                />
+        {/* Welcome Screen */}
+        {showWelcome && messages.length === 0 && (
+          <div className="flex-1 flex flex-col items-center justify-center p-6 text-center">
+            <div className="w-16 h-16 bg-gradient-to-br from-blue-500 via-blue-600 to-indigo-600 rounded-2xl flex items-center justify-center shadow-lg mb-6">
+              <Brain className="w-8 h-8 text-white" />
+            </div>
+            
+            <h2 className={`text-xl font-semibold ${themeClasses.text} mb-3`}>Ask Copilot</h2>
+            
+            <p className={`text-sm ${themeClasses.textSecondary} mb-6 leading-relaxed`}>
+              Copilot is powered by AI, so mistakes are possible. Review output carefully before use.
+            </p>
+            
+            <div className={`text-sm ${themeClasses.textSecondary} space-y-2 mb-8`}>
+              <div className="flex items-center space-x-2">
+                <Paperclip className="w-4 h-4" />
+                <span>or type # to attach context</span>
+              </div>
+              <div className="flex items-center space-x-2">
+                <span className="text-lg">@</span>
+                <span>to chat with extensions</span>
+              </div>
+              <div className="flex items-center space-x-2">
+                <span className="text-lg">/</span>
+                <span>to use commands</span>
+              </div>
+            </div>
+
+            {/* Model Selection */}
+            <div className="w-full">
+              <div className={`border rounded-lg p-4 ${themeClasses.border} ${themeClasses.surface}`}>
+                <h3 className={`text-sm font-medium ${themeClasses.text} mb-3`}>Copilot Models</h3>
+                
+                <div className="space-y-2">
+                  {aiModels.map((model) => (
+                    <div
+                      key={model.id}
+                      onClick={() => setSelectedModel(model.id)}
+                      className={`flex items-center justify-between p-2 rounded cursor-pointer transition-all duration-200 ${
+                        selectedModel === model.id
+                          ? 'bg-blue-600 text-white'
+                          : `${themeClasses.surfaceHover} ${themeClasses.text}`
+                      }`}
+                    >
+                      <div className="flex items-center space-x-2">
+                        {selectedModel === model.id && (
+                          <Check className="w-4 h-4" />
+                        )}
+                        <span className="text-sm font-medium">{model.name}</span>
+                      </div>
+                      <span className={`text-xs ${selectedModel === model.id ? 'text-blue-100' : themeClasses.textSecondary}`}>
+                        {model.speed}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+                
+                <div className="flex items-center justify-between mt-4 pt-3 border-t border-gray-600">
+                  <button className="text-sm text-blue-400 hover:text-blue-300 transition-colors">
+                    Manage Models...
+                  </button>
+                  <button className="text-sm text-blue-400 hover:text-blue-300 transition-colors">
+                    Add Premium Models
+                  </button>
+                </div>
               </div>
             </div>
           </div>
-        ) : (
-          /* Original Chat Interface */
-          <>
-            {/* Messages Container */}
-            <div className={`flex-1 overflow-y-auto px-4 py-4 space-y-4 ${themeClasses.scrollbar} scrollbar-thin`}>
-              {messages.map((message) => (
+        )}
+
+        {/* Messages Container */}
+        {!showWelcome && (
+          <div className={`flex-1 overflow-y-auto px-4 py-4 space-y-4 ${themeClasses.scrollbar} scrollbar-thin`}>
+            {messages.map((message) => (
+              <div
+                key={message.id}
+                className={`flex ${message.type === 'user' ? 'justify-end' : 'justify-start'}`}
+              >
                 <div
-                  key={message.id}
-                  className={`flex ${message.type === 'user' ? 'justify-end' : 'justify-start'}`}
+                  className={`max-w-[85%] rounded-2xl px-4 py-3 ${
+                    message.type === 'user'
+                      ? themeClasses.userMessage
+                      : `${themeClasses.assistantMessage} border`
+                  } shadow-sm`}
                 >
-                  <div
-                    className={`max-w-[85%] rounded-2xl px-4 py-3 ${
-                      message.type === 'user'
-                        ? themeClasses.userMessage
-                        : `${themeClasses.assistantMessage} border`
-                    } shadow-sm`}
-                  >
-                    {message.type === 'assistant' && (
-                      <div className="flex items-center justify-between mb-2">
-                        <span className={`text-xs font-medium ${themeClasses.textSecondary}`}>
-                          olive.ai
-                        </span>
-                        <button
-                          onClick={() => copyToClipboard(message.content, message.id)}
-                          className={`p-1 ${themeClasses.surfaceHover} rounded transition-colors`}
-                          title="Copy message"
-                        >
-                          {copiedMessageId === message.id ? (
-                            <Check className="w-3 h-3 text-green-500" />
-                          ) : (
-                            <Copy className={`w-3 h-3 ${themeClasses.textSecondary}`} />
-                          )}
-                        </button>
+                  {message.type === 'assistant' && (
+                    <div className="flex items-center justify-between mb-2">
+                      <span className={`text-xs font-medium ${themeClasses.textSecondary}`}>
+                        {selectedModelInfo?.name || 'AI Assistant'}
+                      </span>
+                      <button
+                        onClick={() => copyToClipboard(message.content, message.id)}
+                        className={`p-1 ${themeClasses.surfaceHover} rounded transition-colors`}
+                        title="Copy message"
+                      >
+                        {copiedMessageId === message.id ? (
+                          <Check className="w-3 h-3 text-green-500" />
+                        ) : (
+                          <Copy className={`w-3 h-3 ${themeClasses.textSecondary}`} />
+                        )}
+                      </button>
+                    </div>
+                  )}
+                  
+                  <div className="text-sm leading-relaxed">
+                    {message.content.includes('```') ? (
+                      <div className="space-y-2">
+                        {message.content.split('```').map((part, index) => {
+                          if (index % 2 === 1) {
+                            return (
+                              <pre
+                                key={index}
+                                className={`${themeClasses.surface} p-3 rounded-lg text-xs font-mono overflow-x-auto border ${themeClasses.border}`}
+                              >
+                                <code>{part.trim()}</code>
+                              </pre>
+                            );
+                          } else {
+                            return (
+                              <div key={index} className="space-y-1">
+                                {formatContent(part)}
+                              </div>
+                            );
+                          }
+                        })}
+                      </div>
+                    ) : (
+                      <div className="space-y-1">
+                        {formatContent(message.content)}
                       </div>
                     )}
-                    
-                    <div className="text-sm leading-relaxed">
-                      {message.content.includes('```') ? (
-                        <div className="space-y-2">
-                          {message.content.split('```').map((part, index) => {
-                            if (index % 2 === 1) {
-                              return (
-                                <pre
-                                  key={index}
-                                  className={`${themeClasses.surface} p-3 rounded-lg text-xs font-mono overflow-x-auto border ${themeClasses.border}`}
-                                >
-                                  <code>{part.trim()}</code>
-                                </pre>
-                              );
-                            } else {
-                              return (
-                                <div key={index} className="space-y-1">
-                                  {formatContent(part)}
-                                </div>
-                              );
-                            }
-                          })}
-                        </div>
-                      ) : (
-                        <div className="space-y-1">
-                          {formatContent(message.content)}
-                        </div>
-                      )}
-                    </div>
-                    
-                    <div className={`text-xs ${themeClasses.textSecondary} mt-2 opacity-70`}>
-                      {message.timestamp.toLocaleTimeString([], { 
-                        hour: '2-digit', 
-                        minute: '2-digit' 
-                      })}
-                    </div>
+                  </div>
+                  
+                  <div className={`text-xs ${themeClasses.textSecondary} mt-2 opacity-70`}>
+                    {message.timestamp.toLocaleTimeString([], { 
+                      hour: '2-digit', 
+                      minute: '2-digit' 
+                    })}
                   </div>
                 </div>
-              ))}
+              </div>
+            ))}
 
-              {isLoading && (
-                <div className="flex justify-start">
-                  <div className={`${themeClasses.assistantMessage} border rounded-2xl px-4 py-3 shadow-sm`}>
-                    <div className="flex items-center space-x-3">
-                      <Loader2 className="w-4 h-4 text-emerald-500 animate-spin" />
-                      <span className={`text-sm ${themeClasses.textSecondary}`}>
-                        olive.ai is thinking...
-                      </span>
-                    </div>
+            {isLoading && (
+              <div className="flex justify-start">
+                <div className={`${themeClasses.assistantMessage} border rounded-2xl px-4 py-3 shadow-sm`}>
+                  <div className="flex items-center space-x-3">
+                    <Loader2 className="w-4 h-4 text-blue-500 animate-spin" />
+                    <span className={`text-sm ${themeClasses.textSecondary}`}>
+                      {selectedModelInfo?.name || 'AI'} is thinking...
+                    </span>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <div ref={messagesEndRef} />
+          </div>
+        )}
+
+        {/* Input Area */}
+        <div className={`border-t ${themeClasses.border} p-4 flex-shrink-0`}>
+          {/* Model Selector */}
+          <div className="mb-3">
+            <div className="relative" ref={dropdownRef}>
+              <button
+                onClick={() => setShowModelDropdown(!showModelDropdown)}
+                className={`flex items-center justify-between w-full px-3 py-2 text-sm border rounded-lg transition-all duration-200 ${themeClasses.input} ${themeClasses.border}`}
+              >
+                <div className="flex items-center space-x-2">
+                  <Brain className="w-4 h-4 text-blue-500" />
+                  <span>{selectedModelInfo?.name || 'Select Model'}</span>
+                </div>
+                <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${showModelDropdown ? 'rotate-180' : ''}`} />
+              </button>
+
+              {showModelDropdown && (
+                <div className={`absolute bottom-full left-0 right-0 mb-2 border rounded-lg shadow-lg z-50 ${themeClasses.dropdown} ${themeClasses.border}`}>
+                  <div className="py-2">
+                    {aiModels.map((model) => (
+                      <button
+                        key={model.id}
+                        onClick={() => {
+                          setSelectedModel(model.id);
+                          setShowModelDropdown(false);
+                        }}
+                        className={`w-full px-4 py-2 text-left transition-all duration-200 ${
+                          selectedModel === model.id
+                            ? 'bg-blue-600 text-white'
+                            : `${themeClasses.surfaceHover} ${themeClasses.text}`
+                        }`}
+                      >
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <div className="text-sm font-medium">{model.name}</div>
+                            <div className={`text-xs ${selectedModel === model.id ? 'text-blue-100' : themeClasses.textSecondary}`}>
+                              {model.description}
+                            </div>
+                          </div>
+                          <span className={`text-xs ${selectedModel === model.id ? 'text-blue-100' : themeClasses.textSecondary}`}>
+                            {model.speed}
+                          </span>
+                        </div>
+                      </button>
+                    ))}
                   </div>
                 </div>
               )}
-
-              <div ref={messagesEndRef} />
             </div>
+          </div>
 
-            {/* Search Bar at Bottom */}
-            <div className={`border-t ${themeClasses.border} p-4 flex-shrink-0`}>
-              <div className="flex items-end space-x-3">
-                <div className="flex-1">
-                  <textarea
-                    ref={textareaRef}
-                    value={query}
-                    onChange={(e) => setQuery(e.target.value)}
-                    onKeyPress={handleKeyPress}
-                    placeholder="Ask olive.ai anything about your code..."
-                    className={`w-full resize-none border rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500/50 transition-all duration-200 ${themeClasses.input}`}
-                    rows={1}
-                    disabled={isLoading}
-                    style={{ minHeight: '44px', maxHeight: '120px' }}
-                  />
-                </div>
-                
-                <button
-                  onClick={handleSendMessage}
-                  disabled={!query.trim() || isLoading}
-                  className="bg-emerald-600 hover:bg-emerald-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white p-3 rounded-xl transition-all duration-200 flex items-center justify-center shadow-lg hover:shadow-xl flex-shrink-0"
-                  title="Send message"
-                >
-                  {isLoading ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                  ) : (
-                    <Send className="w-4 h-4" />
-                  )}
-                </button>
-              </div>
+          {/* Input Field */}
+          <div className="flex items-end space-x-3">
+            <div className="flex-1">
+              <textarea
+                ref={textareaRef}
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                onKeyPress={handleKeyPress}
+                placeholder="Ask Copilot anything about your code..."
+                className={`w-full resize-none border rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500/50 transition-all duration-200 ${themeClasses.input}`}
+                rows={1}
+                disabled={isLoading}
+                style={{ minHeight: '44px', maxHeight: '120px' }}
+              />
             </div>
-          </>
-        )}
+            
+            <div className="flex items-center space-x-2">
+              <button
+                className={`p-2 ${themeClasses.surfaceHover} rounded-lg transition-all duration-200`}
+                title="Attach file"
+              >
+                <Paperclip className={`w-4 h-4 ${themeClasses.textSecondary}`} />
+              </button>
+              
+              <button
+                className={`p-2 ${themeClasses.surfaceHover} rounded-lg transition-all duration-200`}
+                title="Voice input"
+              >
+                <Mic className={`w-4 h-4 ${themeClasses.textSecondary}`} />
+              </button>
+              
+              <button
+                onClick={handleSendMessage}
+                disabled={!query.trim() || isLoading}
+                className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white p-2 rounded-lg transition-all duration-200 flex items-center justify-center shadow-lg hover:shadow-xl flex-shrink-0"
+                title="Send message"
+              >
+                {isLoading ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Send className="w-4 h-4" />
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );
