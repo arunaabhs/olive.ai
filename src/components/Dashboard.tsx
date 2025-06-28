@@ -12,12 +12,11 @@ const Dashboard: React.FC = () => {
   const [copilotWidth, setCopilotWidth] = useState(320);
   const [terminalOpen, setTerminalOpen] = useState(false);
   const [terminalMinimized, setTerminalMinimized] = useState(false);
-  const [terminalHeight, setTerminalHeight] = useState(384);
   const [currentCode, setCurrentCode] = useState('');
   const [activeTab, setActiveTab] = useState('hello.js');
   const [openTabs, setOpenTabs] = useState(['hello.js', 'example.py', 'sample.html']);
   const [isDarkMode, setIsDarkMode] = useState(false);
-  const [isResizing, setIsResizing] = useState<'sidebar' | 'copilot' | 'terminal' | null>(null);
+  const [isResizing, setIsResizing] = useState<'sidebar' | 'copilot' | null>(null);
   
   const editorRef = useRef<any>(null);
 
@@ -74,7 +73,7 @@ const Dashboard: React.FC = () => {
   };
 
   // Mouse handlers for resizing
-  const handleMouseDown = (type: 'sidebar' | 'copilot' | 'terminal') => (e: React.MouseEvent) => {
+  const handleMouseDown = (type: 'sidebar' | 'copilot') => (e: React.MouseEvent) => {
     e.preventDefault();
     setIsResizing(type);
   };
@@ -88,9 +87,6 @@ const Dashboard: React.FC = () => {
     } else if (isResizing === 'copilot') {
       const newWidth = Math.max(280, Math.min(600, window.innerWidth - e.clientX));
       setCopilotWidth(newWidth);
-    } else if (isResizing === 'terminal') {
-      const newHeight = Math.max(200, Math.min(600, window.innerHeight - e.clientY));
-      setTerminalHeight(newHeight);
     }
   };
 
@@ -102,7 +98,7 @@ const Dashboard: React.FC = () => {
     if (isResizing) {
       document.addEventListener('mousemove', handleMouseMove);
       document.addEventListener('mouseup', handleMouseUp);
-      document.body.style.cursor = isResizing === 'terminal' ? 'ns-resize' : 'ew-resize';
+      document.body.style.cursor = 'ew-resize';
       document.body.style.userSelect = 'none';
 
       return () => {
@@ -201,32 +197,17 @@ const Dashboard: React.FC = () => {
             </div>
           )}
         </div>
-        
-        {/* Terminal with resize handle */}
-        {terminalOpen && (
-          <div className="flex flex-col flex-shrink-0">
-            {/* Terminal resize handle */}
-            <div
-              className={`h-1 cursor-ns-resize ${themeClasses.border} border-t hover:bg-blue-500 transition-colors`}
-              onMouseDown={handleMouseDown('terminal')}
-            />
-            
-            <div 
-              className={`flex-shrink-0 border-t ${themeClasses.border}`}
-              style={{ height: terminalMinimized ? '48px' : `${terminalHeight}px` }}
-            >
-              <Terminal
-                isOpen={terminalOpen}
-                onClose={() => setTerminalOpen(false)}
-                onToggleSize={() => setTerminalMinimized(!terminalMinimized)}
-                isMinimized={terminalMinimized}
-                onRunCode={handleRunCode}
-                isDarkMode={isDarkMode}
-              />
-            </div>
-          </div>
-        )}
       </div>
+
+      {/* Floating Terminal Window */}
+      <Terminal
+        isOpen={terminalOpen}
+        onClose={() => setTerminalOpen(false)}
+        onToggleSize={() => setTerminalMinimized(!terminalMinimized)}
+        isMinimized={terminalMinimized}
+        onRunCode={handleRunCode}
+        isDarkMode={isDarkMode}
+      />
     </div>
   );
 };
