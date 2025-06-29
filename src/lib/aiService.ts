@@ -50,7 +50,8 @@ class AIService {
     });
 
     if (!response.ok) {
-      throw new Error(`OpenAI API error: ${response.statusText}`);
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(`OpenAI API error: ${response.statusText} - ${errorData.error?.message || 'Unknown error'}`);
     }
 
     const data = await response.json();
@@ -66,6 +67,18 @@ class AIService {
       throw new Error('Anthropic API key not configured');
     }
 
+    // Filter out system messages and convert them to the first user message
+    const systemMessage = request.messages.find(msg => msg.role === 'system');
+    const otherMessages = request.messages.filter(msg => msg.role !== 'system');
+    
+    // If there's a system message, prepend it to the first user message
+    if (systemMessage && otherMessages.length > 0 && otherMessages[0].role === 'user') {
+      otherMessages[0] = {
+        ...otherMessages[0],
+        content: `${systemMessage.content}\n\n${otherMessages[0].content}`
+      };
+    }
+
     const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
@@ -76,13 +89,14 @@ class AIService {
       body: JSON.stringify({
         model: request.model,
         max_tokens: request.max_tokens || 1000,
-        messages: request.messages,
+        messages: otherMessages,
         temperature: request.temperature || 0.7,
       }),
     });
 
     if (!response.ok) {
-      throw new Error(`Anthropic API error: ${response.statusText}`);
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(`Anthropic API error: ${response.statusText} - ${errorData.error?.message || 'Unknown error'}`);
     }
 
     const data = await response.json();
@@ -98,39 +112,81 @@ class AIService {
       throw new Error('Google API key not configured');
     }
 
-    // Convert messages to Gemini format
-    const contents = request.messages.map(msg => ({
-      role: msg.role === 'assistant' ? 'model' : 'user',
-      parts: [{ text: msg.content }],
-    }));
+    try {
+      // Convert messages to Gemini format
+      // Gemini doesn't support system messages in the same way, so we'll include system context in the first user message
+      const systemMessage = request.messages.find(msg => msg.role === 'system');
+      const conversationMessages = request.messages.filter(msg => msg.role !== 'system');
+      
+      const contents = conversationMessages.map((msg, index) => {
+        let content = msg.content;
+        
+        // Add system context to the first user message
+        if (index === 0 && msg.role === 'user' && systemMessage) {
+          content = `${systemMessage.content}\n\nUser: ${content}`;
+        }
+        
+        return {
+          role: msg.role === 'assistant' ? 'model' : 'user',
+          parts: [{ text: content }],
+        };
+      });
 
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/${request.model}:generateContent?key=${this.googleApiKey}`,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          contents,
-          generationConfig: {
-            temperature: request.temperature || 0.7,
-            maxOutputTokens: request.max_tokens || 1000,
+      const response = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/${request.model}:generateContent?key=${this.googleApiKey}`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
           },
-        }),
+          body: JSON.stringify({
+            contents,
+            generationConfig: {
+              temperature: request.temperature || 0.7,
+              maxOutputTokens: request.max_tokens || 1000,
+            },
+            safetySettings: [
+              {
+                category: "HARM_CATEGORY_HARASSMENT",
+                threshold: "BLOCK_MEDIUM_AND_ABOVE"
+              },
+              {
+                category: "HARM_CATEGORY_HATE_SPEECH",
+                threshold: "BLOCK_MEDIUM_AND_ABOVE"
+              },
+              {
+                category: "HARM_CATEGORY_SEXUALLY_EXPLICIT",
+                threshold: "BLOCK_MEDIUM_AND_ABOVE"
+              },
+              {
+                category: "HARM_CATEGORY_DANGEROUS_CONTENT",
+                threshold: "BLOCK_MEDIUM_AND_ABOVE"
+              }
+            ]
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(`Gemini API error: ${response.statusText} - ${errorData.error?.message || 'Unknown error'}`);
       }
-    );
 
-    if (!response.ok) {
-      throw new Error(`Gemini API error: ${response.statusText}`);
+      const data = await response.json();
+      
+      if (!data.candidates || !data.candidates[0] || !data.candidates[0].content) {
+        throw new Error('Gemini API returned no content. This might be due to safety filters.');
+      }
+
+      return {
+        content: data.candidates[0].content.parts[0].text,
+        model: request.model,
+        usage: data.usageMetadata,
+      };
+    } catch (error) {
+      console.error('Gemini API Error:', error);
+      throw error;
     }
-
-    const data = await response.json();
-    return {
-      content: data.candidates[0].content.parts[0].text,
-      model: request.model,
-      usage: data.usageMetadata,
-    };
   }
 
   async generateResponse(modelId: string, messages: Array<{ role: 'user' | 'assistant' | 'system'; content: string }>): Promise<AIResponse> {
@@ -178,6 +234,14 @@ class AIService {
       return !!this.googleApiKey;
     }
     return false;
+  }
+
+  getConfigurationStatus(): Record<string, boolean> {
+    return {
+      openai: !!this.openaiApiKey,
+      anthropic: !!this.anthropicApiKey,
+      google: !!this.googleApiKey,
+    };
   }
 }
 
