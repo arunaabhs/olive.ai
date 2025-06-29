@@ -54,25 +54,11 @@ const CopilotSidebar: React.FC<CopilotSidebarProps> = ({ isOpen, onClose, curren
       description: 'Fast and efficient for general tasks'
     },
     {
-      id: 'gpt-4.1',
-      name: 'GPT-4.1',
+      id: 'chatgpt',
+      name: 'ChatGPT',
       provider: 'OpenAI',
       speed: '1x',
       description: 'Advanced reasoning and creativity'
-    },
-    {
-      id: 'gpt-4o',
-      name: 'GPT-4o',
-      provider: 'OpenAI',
-      speed: '1x',
-      description: 'Optimized for speed and efficiency'
-    },
-    {
-      id: 'o3-mini',
-      name: 'o3-mini',
-      provider: 'OpenAI',
-      speed: '1x',
-      description: 'Lightweight and fast responses'
     }
   ];
 

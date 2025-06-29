@@ -198,7 +198,7 @@ class AIService {
     };
 
     try {
-      if (modelId.startsWith('gpt-') || modelId.startsWith('o3-')) {
+      if (modelId === 'chatgpt') {
         return await this.callOpenAI(request);
       } else if (modelId.startsWith('claude-')) {
         return await this.callAnthropic(request);
@@ -217,16 +217,14 @@ class AIService {
     const modelMap: Record<string, string> = {
       'claude-sonnet-3.5': 'claude-3-5-sonnet-20241022',
       'gemini-2.0-flash': 'gemini-2.0-flash-exp',
-      'gpt-4.1': 'gpt-4-turbo-preview',
-      'gpt-4o': 'gpt-4o',
-      'o3-mini': 'o1-mini',
+      'chatgpt': 'gpt-4o-mini',
     };
 
     return modelMap[modelId] || modelId;
   }
 
   isConfigured(modelId: string): boolean {
-    if (modelId.startsWith('gpt-') || modelId.startsWith('o3-')) {
+    if (modelId === 'chatgpt') {
       return !!this.openaiApiKey;
     } else if (modelId.startsWith('claude-')) {
       return !!this.anthropicApiKey;
