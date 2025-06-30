@@ -15,52 +15,70 @@ const ProjectRoom: React.FC = () => {
 
   useEffect(() => {
     if (!projectId) {
+      console.log('No project ID found, redirecting to dashboard');
       navigate('/dashboard');
       return;
     }
+
+    console.log('Joining project:', projectId);
 
     // Simulate joining project room
     const joinProject = async () => {
       setIsJoining(true);
       
-      // Simulate API call to join project
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
-      // Mock project data
-      setProjectInfo({
-        id: projectId,
-        name: `Collaborative Project ${projectId.slice(-8)}`,
-        owner: 'Project Owner',
-        createdAt: new Date(),
-        isPublic: true
-      });
+      try {
+        // Simulate API call to join project
+        await new Promise(resolve => setTimeout(resolve, 1500));
+        
+        // Mock project data
+        setProjectInfo({
+          id: projectId,
+          name: `Collaborative Project ${projectId.slice(-8)}`,
+          owner: user?.email?.split('@')[0] || 'Project Owner',
+          createdAt: new Date(),
+          isPublic: true
+        });
 
-      // Mock collaborators
-      setCollaborators([
-        {
-          id: '1',
-          name: user?.email?.split('@')[0] || 'You',
-          email: user?.email || 'guest@example.com',
-          isOwner: false,
-          isOnline: true,
-          cursor: { line: 0, column: 0 },
-          color: '#3B82F6'
-        },
-        {
-          id: '2',
-          name: 'Collaborator',
-          email: 'friend@example.com',
-          isOwner: true,
-          isOnline: Math.random() > 0.3,
-          cursor: { line: 5, column: 12 },
-          color: '#10B981'
-        }
-      ]);
+        // Mock collaborators
+        setCollaborators([
+          {
+            id: '1',
+            name: user?.email?.split('@')[0] || 'You',
+            email: user?.email || 'guest@example.com',
+            isOwner: true,
+            isOnline: true,
+            cursor: { line: 0, column: 0 },
+            color: '#3B82F6'
+          },
+          {
+            id: '2',
+            name: 'Collaborator',
+            email: 'friend@example.com',
+            isOwner: false,
+            isOnline: Math.random() > 0.3,
+            cursor: { line: 5, column: 12 },
+            color: '#10B981'
+          },
+          {
+            id: '3',
+            name: 'Developer',
+            email: 'dev@example.com',
+            isOwner: false,
+            isOnline: Math.random() > 0.5,
+            cursor: { line: 12, column: 8 },
+            color: '#F59E0B'
+          }
+        ]);
 
-      setIsJoining(false);
-      
-      // Show welcome message for 3 seconds
-      setTimeout(() => setShowWelcome(false), 3000);
+        setIsJoining(false);
+        
+        // Show welcome message for 3 seconds
+        setTimeout(() => setShowWelcome(false), 3000);
+      } catch (error) {
+        console.error('Error joining project:', error);
+        setIsJoining(false);
+        // Could show an error state here
+      }
     };
 
     joinProject();
@@ -79,6 +97,7 @@ const ProjectRoom: React.FC = () => {
     navigate('/dashboard');
   };
 
+  // Loading state
   if (isJoining) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-green-50 flex items-center justify-center">
@@ -104,11 +123,19 @@ const ProjectRoom: React.FC = () => {
           <p className="text-sm text-gray-500 mt-4 font-light">
             Project ID: {projectId}
           </p>
+          
+          <button
+            onClick={() => navigate('/dashboard')}
+            className="mt-6 text-blue-600 hover:text-blue-700 underline text-sm"
+          >
+            Back to Dashboard
+          </button>
         </div>
       </div>
     );
   }
 
+  // Welcome screen
   if (showWelcome && projectInfo) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-green-50 flex items-center justify-center">
@@ -170,6 +197,34 @@ const ProjectRoom: React.FC = () => {
               <ArrowLeft className="w-4 h-4 rotate-180" />
             </button>
           </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Error state - if no project info after loading
+  if (!projectInfo) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-red-50 via-white to-orange-50 flex items-center justify-center">
+        <div className="text-center max-w-md mx-auto p-8">
+          <div className="w-16 h-16 bg-red-500 rounded-full flex items-center justify-center mx-auto mb-6">
+            <X className="w-8 h-8 text-white" />
+          </div>
+          
+          <h2 className="text-2xl font-light text-gray-800 mb-4">
+            Project Not Found
+          </h2>
+          
+          <p className="text-gray-600 font-light mb-6">
+            The project you're looking for doesn't exist or you don't have access to it.
+          </p>
+          
+          <button
+            onClick={() => navigate('/dashboard')}
+            className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-full font-light transition-all duration-200"
+          >
+            Back to Dashboard
+          </button>
         </div>
       </div>
     );
