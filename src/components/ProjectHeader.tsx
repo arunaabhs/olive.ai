@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { Play, Square, RotateCcw, Share, X, Plus, MoreHorizontal, ArrowRight, Terminal, Zap, Code, FileText, Settings, Sun, Moon, ChevronDown, Sparkles } from 'lucide-react';
+import { Play, Square, RotateCcw, Share, X, Plus, MoreHorizontal, ArrowRight, Terminal, Zap, Code, FileText, Settings, Sun, Moon, ChevronDown, Sparkles, Users, Globe } from 'lucide-react';
+import { useAuth } from '../contexts/AuthContext';
 
 interface ProjectHeaderProps {
   onToggleCopilot: () => void;
@@ -13,6 +14,7 @@ interface ProjectHeaderProps {
   onRunCode?: () => void;
   onToggleDarkMode: () => void;
   isDarkMode: boolean;
+  projectId?: string;
 }
 
 const ProjectHeader: React.FC<ProjectHeaderProps> = ({ 
@@ -26,9 +28,11 @@ const ProjectHeader: React.FC<ProjectHeaderProps> = ({
   onTabClose,
   onRunCode,
   onToggleDarkMode,
-  isDarkMode
+  isDarkMode,
+  projectId = 'default-project'
 }) => {
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
+  const { user } = useAuth();
 
   const getFileIcon = (fileName: string) => {
     if (fileName.endsWith('.tsx') || fileName.endsWith('.jsx')) return '⚛️';
@@ -62,6 +66,15 @@ const ProjectHeader: React.FC<ProjectHeaderProps> = ({
 
   const handleDropdownClick = (menu: string) => {
     setActiveDropdown(activeDropdown === menu ? null : menu);
+  };
+
+  const handleShareProject = () => {
+    const shareUrl = `${window.location.origin}/project/${projectId}`;
+    navigator.clipboard.writeText(shareUrl).then(() => {
+      alert('Project link copied to clipboard!');
+    }).catch(() => {
+      alert(`Share this project: ${shareUrl}`);
+    });
   };
 
   const themeClasses = isDarkMode ? {
@@ -188,38 +201,53 @@ const ProjectHeader: React.FC<ProjectHeaderProps> = ({
               )}
             </div>
 
-            {/* Selection Menu */}
+            {/* Collaboration Menu */}
             <div className="relative">
               <button
-                onClick={() => handleDropdownClick('selection')}
+                onClick={() => handleDropdownClick('collaboration')}
                 className={`${themeClasses.textSecondary} hover:${themeClasses.text} cursor-pointer font-light transition-colors flex items-center space-x-1`}
               >
-                <span>Selection</span>
+                <span>Collaboration</span>
                 <ChevronDown className="w-3 h-3" />
               </button>
-              {activeDropdown === 'selection' && (
+              {activeDropdown === 'collaboration' && (
                 <div className={`absolute top-full left-0 mt-1 w-80 ${themeClasses.dropdown} border rounded-lg shadow-lg z-50`}>
                   <div className="py-2">
-                    <div className={`px-4 py-2 ${themeClasses.surfaceHover} cursor-pointer flex items-center justify-between`}>
-                      <span className={themeClasses.text}>Select All</span>
-                      <span className={`text-xs ${themeClasses.textSecondary}`}>Ctrl+A</span>
+                    <div className="px-4 py-2 border-b border-gray-200">
+                      <div className="flex items-center space-x-2">
+                        <Globe className="w-4 h-4 text-blue-500" />
+                        <div>
+                          <p className={`text-sm font-medium ${themeClasses.text}`}>Project Room</p>
+                          <p className={`text-xs ${themeClasses.textSecondary}`}>ID: {projectId}</p>
+                        </div>
+                      </div>
                     </div>
-                    <div className={`px-4 py-2 ${themeClasses.surfaceHover} cursor-pointer flex items-center justify-between`}>
-                      <span className={themeClasses.text}>Expand Selection</span>
-                      <span className={`text-xs ${themeClasses.textSecondary}`}>Shift+Alt+RightArrow</span>
+                    <div 
+                      className={`px-4 py-2 ${themeClasses.surfaceHover} cursor-pointer flex items-center space-x-3`}
+                      onClick={handleShareProject}
+                    >
+                      <Share className="w-4 h-4 text-green-600" />
+                      <span className={themeClasses.text}>Share Project Link</span>
                     </div>
-                    <div className={`px-4 py-2 ${themeClasses.surfaceHover} cursor-pointer flex items-center justify-between`}>
-                      <span className={themeClasses.text}>Shrink Selection</span>
-                      <span className={`text-xs ${themeClasses.textSecondary}`}>Shift+Alt+LeftArrow</span>
+                    <div className={`px-4 py-2 ${themeClasses.surfaceHover} cursor-pointer flex items-center space-x-3`}>
+                      <Users className="w-4 h-4 text-blue-600" />
+                      <span className={themeClasses.text}>Manage Collaborators</span>
+                    </div>
+                    <div className={`px-4 py-2 ${themeClasses.surfaceHover} cursor-pointer flex items-center space-x-3`}>
+                      <Settings className="w-4 h-4 text-gray-600" />
+                      <span className={themeClasses.text}>Collaboration Settings</span>
                     </div>
                     <hr className={`my-2 ${themeClasses.border}`} />
-                    <div className={`px-4 py-2 ${themeClasses.surfaceHover} cursor-pointer flex items-center justify-between`}>
-                      <span className={themeClasses.text}>Copy Line Up</span>
-                      <span className={`text-xs ${themeClasses.textSecondary}`}>Shift+Alt+UpArrow</span>
-                    </div>
-                    <div className={`px-4 py-2 ${themeClasses.surfaceHover} cursor-pointer flex items-center justify-between`}>
-                      <span className={themeClasses.text}>Copy Line Down</span>
-                      <span className={`text-xs ${themeClasses.textSecondary}`}>Shift+Alt+DownArrow</span>
+                    <div className="px-4 py-2">
+                      <p className={`text-xs ${themeClasses.textSecondary} mb-2`}>Current User:</p>
+                      <div className="flex items-center space-x-2">
+                        <div className="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center text-white text-xs font-medium">
+                          {user?.email?.charAt(0).toUpperCase() || 'G'}
+                        </div>
+                        <span className={`text-sm ${themeClasses.text}`}>
+                          {user?.email?.split('@')[0] || 'Guest'}
+                        </span>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -275,48 +303,6 @@ const ProjectHeader: React.FC<ProjectHeaderProps> = ({
               )}
             </div>
 
-            {/* Go Menu */}
-            <div className="relative">
-              <button
-                onClick={() => handleDropdownClick('go')}
-                className={`${themeClasses.textSecondary} hover:${themeClasses.text} cursor-pointer font-light transition-colors flex items-center space-x-1`}
-              >
-                <span>Go</span>
-                <ChevronDown className="w-3 h-3" />
-              </button>
-              {activeDropdown === 'go' && (
-                <div className={`absolute top-full left-0 mt-1 w-80 ${themeClasses.dropdown} border rounded-lg shadow-lg z-50`}>
-                  <div className="py-2">
-                    <div className={`px-4 py-2 ${themeClasses.surfaceHover} cursor-pointer flex items-center justify-between`}>
-                      <span className={themeClasses.text}>Back</span>
-                      <span className={`text-xs ${themeClasses.textSecondary}`}>Alt+LeftArrow</span>
-                    </div>
-                    <div className={`px-4 py-2 ${themeClasses.surfaceHover} cursor-pointer flex items-center justify-between`}>
-                      <span className={themeClasses.text}>Forward</span>
-                      <span className={`text-xs ${themeClasses.textSecondary}`}>Alt+RightArrow</span>
-                    </div>
-                    <div className={`px-4 py-2 ${themeClasses.surfaceHover} cursor-pointer flex items-center justify-between`}>
-                      <span className={themeClasses.text}>Last Edit Location</span>
-                      <span className={`text-xs ${themeClasses.textSecondary}`}>Ctrl+K Ctrl+Q</span>
-                    </div>
-                    <hr className={`my-2 ${themeClasses.border}`} />
-                    <div className={`px-4 py-2 ${themeClasses.surfaceHover} cursor-pointer flex items-center justify-between`}>
-                      <span className={themeClasses.text}>Go to File...</span>
-                      <span className={`text-xs ${themeClasses.textSecondary}`}>Ctrl+P</span>
-                    </div>
-                    <div className={`px-4 py-2 ${themeClasses.surfaceHover} cursor-pointer flex items-center justify-between`}>
-                      <span className={themeClasses.text}>Go to Symbol in Workspace...</span>
-                      <span className={`text-xs ${themeClasses.textSecondary}`}>Ctrl+T</span>
-                    </div>
-                    <div className={`px-4 py-2 ${themeClasses.surfaceHover} cursor-pointer flex items-center justify-between`}>
-                      <span className={themeClasses.text}>Go to Line/Column...</span>
-                      <span className={`text-xs ${themeClasses.textSecondary}`}>Ctrl+G</span>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-
             {/* Run Menu - Contains the execution controls */}
             <div className="relative">
               <button
@@ -364,13 +350,6 @@ const ProjectHeader: React.FC<ProjectHeaderProps> = ({
                       </div>
                       <span className={`text-xs ${themeClasses.textSecondary}`}>Ctrl+Shift+F5</span>
                     </div>
-                    <hr className={`my-2 ${themeClasses.border}`} />
-                    <div className={`px-4 py-2 ${themeClasses.surfaceHover} cursor-pointer`}>
-                      <span className={themeClasses.text}>Open Configurations</span>
-                    </div>
-                    <div className={`px-4 py-2 ${themeClasses.surfaceHover} cursor-pointer`}>
-                      <span className={themeClasses.text}>Add Configuration...</span>
-                    </div>
                   </div>
                 </div>
               )}
@@ -381,6 +360,12 @@ const ProjectHeader: React.FC<ProjectHeaderProps> = ({
         </div>
         
         <div className="flex items-center space-x-2">
+          {/* Project Info */}
+          <div className={`px-3 py-1 ${themeClasses.surface} rounded-full text-xs ${themeClasses.textSecondary} flex items-center space-x-2`}>
+            <Globe className="w-3 h-3" />
+            <span>Project: {projectId.split('-')[0]}...</span>
+          </div>
+
           {/* Dark/Light Mode Toggle */}
           <button
             onClick={onToggleDarkMode}
@@ -407,7 +392,7 @@ const ProjectHeader: React.FC<ProjectHeaderProps> = ({
             <Terminal className="w-4 h-4" />
           </button>
 
-          {/* Copilot Toggle - Changed to Sparkles icon for elegance */}
+          {/* Copilot Toggle */}
           <button
             onClick={onToggleCopilot}
             className={`p-2 rounded-full transition-all duration-200 ${
@@ -421,7 +406,10 @@ const ProjectHeader: React.FC<ProjectHeaderProps> = ({
           </button>
 
           {/* Share Button */}
-          <button className={`flex items-center space-x-2 ${themeClasses.surface} ${themeClasses.surfaceHover} ${themeClasses.textSecondary} border ${themeClasses.border} px-3 py-2 rounded-full transition-all duration-200 text-sm font-light`}>
+          <button 
+            onClick={handleShareProject}
+            className={`flex items-center space-x-2 ${themeClasses.surface} ${themeClasses.surfaceHover} ${themeClasses.textSecondary} border ${themeClasses.border} px-3 py-2 rounded-full transition-all duration-200 text-sm font-light`}
+          >
             <Share className="w-3 h-3" />
             <span>Share</span>
             <ArrowRight className="w-3 h-3" />

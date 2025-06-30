@@ -17,24 +17,29 @@ import {
   Package,
   Terminal,
   Code,
-  Database
+  Database,
+  Users,
+  Globe
 } from 'lucide-react';
 import Logo from './Logo';
+import { useAuth } from '../contexts/AuthContext';
 
 interface SidebarProps {
   collapsed: boolean;
   onToggle: () => void;
   onNewFile: () => void;
   isDarkMode?: boolean;
+  projectId?: string;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle, onNewFile, isDarkMode = false }) => {
+const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle, onNewFile, isDarkMode = false, projectId = 'default-project' }) => {
   const [explorerExpanded, setExplorerExpanded] = useState(true);
   const [srcExpanded, setSrcExpanded] = useState(true);
   const [publicExpanded, setPublicExpanded] = useState(false);
   const [functionsExpanded, setFunctionsExpanded] = useState(false);
   const [openEditorsExpanded, setOpenEditorsExpanded] = useState(true);
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   const handleLogoClick = () => {
     navigate('/');
@@ -110,7 +115,9 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle, onNewFile, isDar
           name: 'lib', 
           type: 'folder', 
           children: [
-            { name: 'supabase.ts', type: 'file', icon: '🗃️' }
+            { name: 'supabase.ts', type: 'file', icon: '🗃️' },
+            { name: 'gemini.ts', type: 'file', icon: '🤖' },
+            { name: 'openrouter.ts', type: 'file', icon: '🤖' }
           ],
           icon: '📂'
         },
@@ -244,6 +251,9 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle, onNewFile, isDar
           <button className={`p-1.5 ${themeClasses.surfaceHover} rounded transition-all duration-200`} title="Terminal">
             <Terminal className={`w-4 h-4 ${themeClasses.textSecondary}`} />
           </button>
+          <button className={`p-1.5 ${themeClasses.surfaceHover} rounded transition-all duration-200`} title="Collaboration">
+            <Users className={`w-4 h-4 ${themeClasses.textSecondary}`} />
+          </button>
           <button className={`p-1.5 ${themeClasses.surfaceHover} rounded transition-all duration-200`} title="Settings">
             <Settings className={`w-4 h-4 ${themeClasses.textSecondary}`} />
           </button>
@@ -288,6 +298,25 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle, onNewFile, isDar
           >
             <X className={`w-3 h-3 ${themeClasses.textSecondary}`} />
           </button>
+        </div>
+      </div>
+
+      {/* Project Info */}
+      <div className={`px-3 py-2 border-b ${themeClasses.border} ${themeClasses.surface}`}>
+        <div className="flex items-center space-x-2">
+          <Globe className={`w-3 h-3 ${themeClasses.accent}`} />
+          <div className="flex-1 min-w-0">
+            <p className={`text-xs font-medium ${themeClasses.text} truncate`}>
+              {user ? `${user.email?.split('@')[0]}'s Project` : 'Guest Project'}
+            </p>
+            <p className={`text-xs ${themeClasses.textSecondary} truncate`}>
+              ID: {projectId}
+            </p>
+          </div>
+          <div className="flex items-center space-x-1">
+            <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse" title="Collaboration Active"></div>
+            <Users className={`w-3 h-3 ${themeClasses.textSecondary}`} title="Collaborative Project" />
+          </div>
         </div>
       </div>
 
@@ -367,6 +396,11 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle, onNewFile, isDar
         <button className={`flex items-center w-full px-3 py-1.5 ${themeClasses.surfaceHover} rounded transition-all duration-200 text-xs font-light`}>
           <GitBranch className={`w-3 h-3 ${themeClasses.textSecondary} mr-2`} />
           <span className={themeClasses.text}>Source Control</span>
+        </button>
+        
+        <button className={`flex items-center w-full px-3 py-1.5 ${themeClasses.surfaceHover} rounded transition-all duration-200 text-xs font-light`}>
+          <Users className={`w-3 h-3 ${themeClasses.textSecondary} mr-2`} />
+          <span className={themeClasses.text}>Collaboration</span>
         </button>
         
         <button className={`flex items-center w-full px-3 py-1.5 ${themeClasses.surfaceHover} rounded transition-all duration-200 text-xs font-light`}>

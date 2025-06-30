@@ -4,10 +4,11 @@ import CodeEditor from './CodeEditor';
 import ProjectHeader from './ProjectHeader';
 import CopilotSidebar from './CopilotSidebar';
 import Terminal from './Terminal';
+import { useAuth } from '../contexts/AuthContext';
 
 const Dashboard: React.FC = () => {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  const [sidebarWidth, setSidebarWidth] = useState(256); // Reduced from 320 (20% reduction)
+  const [sidebarWidth, setSidebarWidth] = useState(256);
   const [copilotOpen, setCopilotOpen] = useState(false);
   const [copilotWidth, setCopilotWidth] = useState(320);
   const [terminalOpen, setTerminalOpen] = useState(false);
@@ -19,6 +20,10 @@ const Dashboard: React.FC = () => {
   const [isResizing, setIsResizing] = useState<'sidebar' | 'copilot' | null>(null);
   
   const editorRef = useRef<any>(null);
+  const { user } = useAuth();
+
+  // Generate project ID based on user or use default
+  const projectId = user?.id ? `user-${user.id}` : 'guest-project';
 
   const handleGetCurrentCode = () => {
     if (editorRef.current) {
@@ -137,6 +142,7 @@ const Dashboard: React.FC = () => {
             onToggle={() => setSidebarCollapsed(!sidebarCollapsed)}
             onNewFile={handleNewFile}
             isDarkMode={isDarkMode}
+            projectId={projectId}
           />
         </div>
         
@@ -163,6 +169,7 @@ const Dashboard: React.FC = () => {
           onRunCode={handleRunFromEditor}
           onToggleDarkMode={toggleDarkMode}
           isDarkMode={isDarkMode}
+          projectId={projectId}
         />
         
         <div className="flex-1 flex min-h-0">
@@ -174,6 +181,7 @@ const Dashboard: React.FC = () => {
               activeFile={activeTab}
               onRunCode={handleRunCode}
               isDarkMode={isDarkMode}
+              projectId={projectId}
             />
           </div>
 

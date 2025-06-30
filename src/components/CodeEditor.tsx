@@ -4,13 +4,15 @@ import * as Y from 'yjs';
 import { MonacoBinding } from 'y-monaco';
 import { WebsocketProvider } from 'y-websocket';
 import { IndexeddbPersistence } from 'y-indexeddb';
-import { Play, Save, Download, Upload, Users, Wifi, WifiOff } from 'lucide-react';
+import { Play, Save, Download, Upload, Users, Wifi, WifiOff, Eye, UserCheck } from 'lucide-react';
+import { useAuth } from '../contexts/AuthContext';
 
 interface CodeEditorProps {
   onCodeChange?: (code: string) => void;
   activeFile?: string;
   onRunCode?: (code: string, language: string) => void;
   isDarkMode?: boolean;
+  projectId?: string;
 }
 
 interface CodeEditorRef {
@@ -19,15 +21,39 @@ interface CodeEditorRef {
   focus: () => void;
 }
 
-// Shared Yjs document per project
-const ydoc = new Y.Doc();
-const ytext = ydoc.getText('monaco');
+interface CollaboratorInfo {
+  id: string;
+  name: string;
+  email: string;
+  color: string;
+  cursor?: {
+    line: number;
+    column: number;
+  };
+  selection?: {
+    startLine: number;
+    startColumn: number;
+    endLine: number;
+    endColumn: number;
+  };
+  lastSeen: number;
+}
+
+// Create project-specific Yjs documents
+const projectDocs = new Map<string, Y.Doc>();
+const getProjectDoc = (projectId: string) => {
+  if (!projectDocs.has(projectId)) {
+    projectDocs.set(projectId, new Y.Doc());
+  }
+  return projectDocs.get(projectId)!;
+};
 
 const CodeEditor = forwardRef<CodeEditorRef, CodeEditorProps>(({ 
   onCodeChange, 
   activeFile = 'hello.js', 
   onRunCode,
-  isDarkMode = false 
+  isDarkMode = false,
+  projectId = 'default-project'
 }, ref) => {
   const editorRef = useRef<any>(null);
   const monacoRef = useRef<Monaco | null>(null);
@@ -36,10 +62,17 @@ const CodeEditor = forwardRef<CodeEditorRef, CodeEditorProps>(({
   const persistenceRef = useRef<IndexeddbPersistence | null>(null);
   
   const [isConnected, setIsConnected] = useState(false);
-  const [connectedUsers, setConnectedUsers] = useState(0);
+  const [collaborators, setCollaborators] = useState<Map<string, CollaboratorInfo>>(new Map());
   const [collaborationEnabled, setCollaborationEnabled] = useState(true);
+  const [showCollaborators, setShowCollaborators] = useState(false);
 
-  // File content mapping
+  const { user } = useAuth();
+
+  // Get project-specific document and text
+  const ydoc = getProjectDoc(projectId);
+  const ytext = ydoc.getText(`file-${activeFile}`);
+
+  // File content mapping per project
   const [fileContents, setFileContents] = useState<Record<string, string>>({
     'hello.js': `// Welcome to Olive Code Editor with Real-time Collaboration!
 console.log("Hello, World!");
@@ -49,6 +82,8 @@ console.log("Hello, World!");
 // 🔄 Automatic synchronization across sessions
 // 💾 Local persistence with IndexedDB
 // 🌐 WebSocket-based collaboration
+// 👥 User awareness with cursors and selections
+// 🏠 Project-specific rooms
 
 function greetUser(name) {
   return \`Hello, \${name}! Welcome to collaborative coding!\`;
@@ -68,19 +103,26 @@ import json
 print("Welcome to collaborative Python coding!")
 
 class CollaborativeEditor:
-    def __init__(self, project_id):
+    def __init__(self, project_id, user_info):
         self.project_id = project_id
-        self.users = []
+        self.user_info = user_info
+        self.collaborators = {}
         
     async def sync_changes(self, change):
         """Sync changes across all connected users"""
-        print(f"Syncing change: {change}")
+        print(f"Syncing change from {self.user_info['name']}: {change}")
         # Yjs handles the actual synchronization
         
-    def add_user(self, user_id):
-        self.users.append(user_id)
-        print(f"User {user_id} joined the session")
+    def add_collaborator(self, user_info):
+        self.collaborators[user_info['id']] = user_info
+        print(f"User {user_info['name']} joined the session")
         
+    def show_user_cursors(self):
+        """Display cursor positions of all collaborators"""
+        for user_id, user in self.collaborators.items():
+            if 'cursor' in user:
+                print(f"{user['name']} is at line {user['cursor']['line']}")
+
 def fibonacci(n):
     """Generate Fibonacci sequence collaboratively"""
     if n <= 1:
@@ -91,7 +133,7 @@ def fibonacci(n):
 for i in range(10):
     print(f"F({i}) = {fibonacci(i)}")
 
-# Edit this code and see real-time updates!`,
+# Edit this code and see real-time updates with user awareness!`,
     
     'sample.html': `<!DOCTYPE html>
 <html lang="en">
@@ -126,6 +168,25 @@ for i in range(10):
             padding: 10px;
             background: rgba(255, 255, 255, 0.1);
             border-radius: 10px;
+        }
+        
+        .user-avatars {
+            display: flex;
+            gap: 5px;
+            margin-left: auto;
+        }
+        
+        .user-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 12px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
         }
         
         .status-indicator {
@@ -173,11 +234,14 @@ for i in range(10):
         <div class="collaboration-status">
             <div class="status-indicator"></div>
             <span>Real-time Collaboration Active</span>
+            <div class="user-avatars" id="userAvatars">
+                <!-- User avatars will be populated by JavaScript -->
+            </div>
         </div>
         
         <h1>🚀 Olive Code Editor</h1>
         
-        <p>Experience the future of collaborative coding with real-time synchronization powered by Yjs!</p>
+        <p>Experience the future of collaborative coding with real-time synchronization, user awareness, and project-specific rooms!</p>
         
         <div class="feature-grid">
             <div class="feature-card">
@@ -186,13 +250,23 @@ for i in range(10):
             </div>
             
             <div class="feature-card">
-                <h3>💾 Persistent Storage</h3>
-                <p>Your work is automatically saved locally and synced when you reconnect.</p>
+                <h3>👥 User Awareness</h3>
+                <p>See other users' cursors, selections, and real-time presence indicators.</p>
             </div>
             
             <div class="feature-card">
-                <h3>👥 Multi-user Support</h3>
-                <p>Multiple developers can edit the same file simultaneously without conflicts.</p>
+                <h3>🏠 Project Rooms</h3>
+                <p>Each project has its own collaboration space with isolated document sharing.</p>
+            </div>
+            
+            <div class="feature-card">
+                <h3>🔐 Authenticated Users</h3>
+                <p>Integration with Supabase auth shows real user names and profiles.</p>
+            </div>
+            
+            <div class="feature-card">
+                <h3>💾 Persistent Storage</h3>
+                <p>Your work is automatically saved locally and synced when you reconnect.</p>
             </div>
             
             <div class="feature-card">
@@ -202,8 +276,25 @@ for i in range(10):
         </div>
         
         <script>
-            // Collaborative editing demo
-            console.log("Collaborative HTML editing is now active!");
+            // Collaborative editing demo with user awareness
+            console.log("Collaborative HTML editing with user awareness is now active!");
+            
+            // Simulate user avatars
+            const users = [
+                { name: 'Alice', color: '#ff6b6b' },
+                { name: 'Bob', color: '#4ecdc4' },
+                { name: 'Charlie', color: '#45b7d1' }
+            ];
+            
+            const avatarsContainer = document.getElementById('userAvatars');
+            users.forEach(user => {
+                const avatar = document.createElement('div');
+                avatar.className = 'user-avatar';
+                avatar.style.backgroundColor = user.color;
+                avatar.textContent = user.name.charAt(0);
+                avatar.title = user.name;
+                avatarsContainer.appendChild(avatar);
+            });
             
             // Simulate real-time updates
             setInterval(() => {
@@ -211,7 +302,7 @@ for i in range(10):
                 console.log(\`Collaboration heartbeat: \${timestamp}\`);
             }, 5000);
             
-            // Try editing this HTML and see changes sync in real-time!
+            // Try editing this HTML and see changes sync in real-time with user awareness!
         </script>
     </div>
 </body>
@@ -257,6 +348,20 @@ for i in range(10):
     }
   };
 
+  const generateUserColor = (userId: string): string => {
+    const colors = [
+      '#ff6b6b', '#4ecdc4', '#45b7d1', '#96ceb4', '#feca57',
+      '#ff9ff3', '#54a0ff', '#5f27cd', '#00d2d3', '#ff9f43',
+      '#10ac84', '#ee5a24', '#0abde3', '#3867d6', '#8854d0'
+    ];
+    
+    let hash = 0;
+    for (let i = 0; i < userId.length; i++) {
+      hash = userId.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    return colors[Math.abs(hash) % colors.length];
+  };
+
   const setupCollaboration = (editor: any, monaco: Monaco) => {
     if (!collaborationEnabled) return;
 
@@ -272,13 +377,13 @@ for i in range(10):
         persistenceRef.current.destroy();
       }
 
-      // Set up IndexedDB persistence for offline support
-      persistenceRef.current = new IndexeddbPersistence('olive-editor', ydoc);
+      // Set up IndexedDB persistence for offline support (project-specific)
+      persistenceRef.current = new IndexeddbPersistence(`olive-editor-${projectId}`, ydoc);
       
-      // Set up WebSocket provider for real-time collaboration
-      // Using a demo WebSocket server - in production, you'd use your own
+      // Set up WebSocket provider for real-time collaboration (project-specific room)
       const wsUrl = import.meta.env.VITE_COLLABORATION_WS_URL || 'wss://demos.yjs.dev';
-      providerRef.current = new WebsocketProvider(wsUrl, 'olive-editor-room', ydoc);
+      const roomName = `olive-project-${projectId}`;
+      providerRef.current = new WebsocketProvider(wsUrl, roomName, ydoc);
       
       // Set up Monaco binding
       bindingRef.current = new MonacoBinding(
@@ -293,20 +398,72 @@ for i in range(10):
         setIsConnected(event.status === 'connected');
       });
 
-      // Handle awareness (connected users)
+      // Set user info for awareness (using Supabase auth data)
+      const userInfo = {
+        name: user?.email?.split('@')[0] || `Guest-${Math.floor(Math.random() * 1000)}`,
+        email: user?.email || 'guest@example.com',
+        color: generateUserColor(user?.id || 'guest'),
+        id: user?.id || `guest-${Date.now()}`,
+        avatar: user?.email?.charAt(0).toUpperCase() || 'G'
+      };
+
+      providerRef.current.awareness.setLocalStateField('user', userInfo);
+
+      // Handle awareness changes (other users joining/leaving, cursor movements)
       providerRef.current.awareness.on('change', () => {
         const states = providerRef.current?.awareness.getStates();
-        setConnectedUsers(states ? states.size : 0);
+        if (states) {
+          const newCollaborators = new Map<string, CollaboratorInfo>();
+          
+          states.forEach((state, clientId) => {
+            if (state.user && clientId !== providerRef.current?.awareness.clientID) {
+              const collaborator: CollaboratorInfo = {
+                id: state.user.id,
+                name: state.user.name,
+                email: state.user.email,
+                color: state.user.color,
+                lastSeen: Date.now()
+              };
+
+              // Add cursor and selection info if available
+              if (state.cursor) {
+                collaborator.cursor = state.cursor;
+              }
+              if (state.selection) {
+                collaborator.selection = state.selection;
+              }
+
+              newCollaborators.set(clientId.toString(), collaborator);
+            }
+          });
+          
+          setCollaborators(newCollaborators);
+        }
       });
 
-      // Set user info for awareness
-      providerRef.current.awareness.setLocalStateField('user', {
-        name: `User-${Math.floor(Math.random() * 1000)}`,
-        color: `hsl(${Math.floor(Math.random() * 360)}, 70%, 50%)`,
-        timestamp: Date.now()
+      // Track cursor position for awareness
+      editor.onDidChangeCursorPosition((e: any) => {
+        if (providerRef.current) {
+          providerRef.current.awareness.setLocalStateField('cursor', {
+            line: e.position.lineNumber,
+            column: e.position.column
+          });
+        }
       });
 
-      console.log('✅ Collaborative editing initialized');
+      // Track selection for awareness
+      editor.onDidChangeCursorSelection((e: any) => {
+        if (providerRef.current) {
+          providerRef.current.awareness.setLocalStateField('selection', {
+            startLine: e.selection.startLineNumber,
+            startColumn: e.selection.startColumn,
+            endLine: e.selection.endLineNumber,
+            endColumn: e.selection.endColumn
+          });
+        }
+      });
+
+      console.log(`✅ Collaborative editing initialized for project: ${projectId}`);
     } catch (error) {
       console.error('❌ Failed to setup collaboration:', error);
       setCollaborationEnabled(false);
@@ -317,7 +474,7 @@ for i in range(10):
     editorRef.current = editor;
     monacoRef.current = monaco;
 
-    // Configure Monaco Editor
+    // Configure Monaco Editor themes
     monaco.editor.defineTheme('olive-dark', {
       base: 'vs-dark',
       inherit: true,
@@ -396,7 +553,32 @@ for i in range(10):
 
   // Update editor content when active file changes
   useEffect(() => {
-    if (editorRef.current) {
+    if (editorRef.current && collaborationEnabled) {
+      // Get new ytext for the active file
+      const newYtext = ydoc.getText(`file-${activeFile}`);
+      
+      // Destroy existing binding
+      if (bindingRef.current) {
+        bindingRef.current.destroy();
+      }
+      
+      // Create new binding for the active file
+      if (providerRef.current && monacoRef.current) {
+        bindingRef.current = new MonacoBinding(
+          newYtext,
+          editorRef.current.getModel(),
+          new Set([editorRef.current]),
+          providerRef.current.awareness
+        );
+      }
+      
+      // Set content if not collaborative or if ytext is empty
+      const content = fileContents[activeFile] || '// Start coding...';
+      if (newYtext.length === 0) {
+        newYtext.insert(0, content);
+      }
+    } else if (editorRef.current) {
+      // Non-collaborative mode
       const content = fileContents[activeFile] || '// Start coding...';
       const currentContent = editorRef.current.getValue();
       
@@ -404,7 +586,7 @@ for i in range(10):
         editorRef.current.setValue(content);
       }
     }
-  }, [activeFile]);
+  }, [activeFile, collaborationEnabled]);
 
   // Update theme when dark mode changes
   useEffect(() => {
@@ -474,7 +656,7 @@ for i in range(10):
           providerRef.current = null;
         }
         setIsConnected(false);
-        setConnectedUsers(0);
+        setCollaborators(new Map());
       }
     }
   };
@@ -494,6 +676,8 @@ for i in range(10):
     surface: 'bg-gray-50',
     surfaceHover: 'hover:bg-gray-100'
   };
+
+  const collaboratorArray = Array.from(collaborators.values());
 
   return (
     <div className={`h-full flex flex-col ${themeClasses.bg}`}>
@@ -557,20 +741,82 @@ for i in range(10):
                   </span>
                 </div>
                 
-                {connectedUsers > 0 && (
-                  <div className="flex items-center space-x-1">
-                    <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-                    <span className={`text-xs ${themeClasses.textSecondary}`}>
-                      {connectedUsers} user{connectedUsers !== 1 ? 's' : ''}
-                    </span>
+                {collaboratorArray.length > 0 && (
+                  <div className="relative">
+                    <button
+                      onClick={() => setShowCollaborators(!showCollaborators)}
+                      className={`flex items-center space-x-1 px-2 py-1 rounded ${themeClasses.surface} ${themeClasses.surfaceHover} transition-all duration-200`}
+                      title="Show Collaborators"
+                    >
+                      <div className="flex -space-x-1">
+                        {collaboratorArray.slice(0, 3).map((collaborator, index) => (
+                          <div
+                            key={collaborator.id}
+                            className="w-6 h-6 rounded-full border-2 border-white flex items-center justify-center text-xs font-medium text-white"
+                            style={{ backgroundColor: collaborator.color, zIndex: 10 - index }}
+                            title={collaborator.name}
+                          >
+                            {collaborator.name.charAt(0).toUpperCase()}
+                          </div>
+                        ))}
+                        {collaboratorArray.length > 3 && (
+                          <div className="w-6 h-6 rounded-full border-2 border-white bg-gray-500 flex items-center justify-center text-xs font-medium text-white">
+                            +{collaboratorArray.length - 3}
+                          </div>
+                        )}
+                      </div>
+                      <Eye className="w-3 h-3" />
+                    </button>
+
+                    {/* Collaborators Dropdown */}
+                    {showCollaborators && (
+                      <div className={`absolute top-full right-0 mt-2 w-64 ${themeClasses.surface} border ${themeClasses.border} rounded-lg shadow-lg z-50`}>
+                        <div className="p-3">
+                          <h3 className={`text-sm font-medium ${themeClasses.text} mb-2`}>
+                            Active Collaborators ({collaboratorArray.length})
+                          </h3>
+                          <div className="space-y-2">
+                            {collaboratorArray.map((collaborator) => (
+                              <div key={collaborator.id} className="flex items-center space-x-2">
+                                <div
+                                  className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium text-white"
+                                  style={{ backgroundColor: collaborator.color }}
+                                >
+                                  {collaborator.name.charAt(0).toUpperCase()}
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <p className={`text-sm font-medium ${themeClasses.text} truncate`}>
+                                    {collaborator.name}
+                                  </p>
+                                  <p className={`text-xs ${themeClasses.textSecondary} truncate`}>
+                                    {collaborator.email}
+                                  </p>
+                                  {collaborator.cursor && (
+                                    <p className={`text-xs ${themeClasses.textSecondary}`}>
+                                      Line {collaborator.cursor.line}, Col {collaborator.cursor.column}
+                                    </p>
+                                  )}
+                                </div>
+                                <UserCheck className="w-4 h-4 text-green-500" />
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
             )}
           </div>
 
-          <div className={`text-xs ${themeClasses.textSecondary}`}>
-            {getLanguageFromFile(activeFile).toUpperCase()}
+          <div className={`text-xs ${themeClasses.textSecondary} flex items-center space-x-2`}>
+            <span>{getLanguageFromFile(activeFile).toUpperCase()}</span>
+            {collaborationEnabled && (
+              <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded-full text-xs">
+                Project: {projectId}
+              </span>
+            )}
           </div>
         </div>
       </div>
@@ -675,16 +921,33 @@ for i in range(10):
               <span>Yjs {isConnected ? 'Connected' : 'Offline'}</span>
             </span>
           )}
+          {user && (
+            <span className="flex items-center space-x-1">
+              <UserCheck className="w-3 h-3" />
+              <span>{user.email?.split('@')[0]}</span>
+            </span>
+          )}
         </div>
         
         <div className="flex items-center space-x-4">
           <span>Spaces: 2</span>
           <span>Auto Save: On</span>
-          {collaborationEnabled && connectedUsers > 0 && (
-            <span>{connectedUsers} collaborator{connectedUsers !== 1 ? 's' : ''}</span>
+          {collaborationEnabled && collaboratorArray.length > 0 && (
+            <span>{collaboratorArray.length} collaborator{collaboratorArray.length !== 1 ? 's' : ''}</span>
           )}
+          <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs">
+            Room: {projectId}
+          </span>
         </div>
       </div>
+
+      {/* Click outside to close collaborators dropdown */}
+      {showCollaborators && (
+        <div 
+          className="fixed inset-0 z-40" 
+          onClick={() => setShowCollaborators(false)}
+        />
+      )}
     </div>
   );
 });
