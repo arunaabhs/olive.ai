@@ -226,6 +226,149 @@ const Terminal: React.FC<TerminalProps> = ({ isOpen, onClose, onToggleSize, isMi
     }
   };
 
+  // Real code execution function
+  const executeRealCode = async (code: string, language: string) => {
+    addLine(`🚀 Executing ${language} code...`, 'info');
+    addLine('', 'output');
+    
+    try {
+      if (language === 'javascript' || language === 'typescript') {
+        // Execute JavaScript/TypeScript code
+        addLine('// JavaScript Execution Output:', 'info');
+        addLine('', 'output');
+        
+        // Create a safe execution environment
+        const originalConsoleLog = console.log;
+        const originalConsoleError = console.error;
+        const originalConsoleWarn = console.warn;
+        
+        const outputs: string[] = [];
+        
+        // Override console methods to capture output
+        console.log = (...args) => {
+          const output = args.map(arg => 
+            typeof arg === 'object' ? JSON.stringify(arg, null, 2) : String(arg)
+          ).join(' ');
+          outputs.push(output);
+          addLine(output, 'output');
+        };
+        
+        console.error = (...args) => {
+          const output = args.map(arg => String(arg)).join(' ');
+          outputs.push(`ERROR: ${output}`);
+          addLine(`ERROR: ${output}`, 'error');
+        };
+        
+        console.warn = (...args) => {
+          const output = args.map(arg => String(arg)).join(' ');
+          outputs.push(`WARNING: ${output}`);
+          addLine(`WARNING: ${output}`, 'warning');
+        };
+        
+        try {
+          // Execute the code
+          const result = eval(code);
+          
+          // If the result is not undefined and nothing was logged, show the result
+          if (result !== undefined && outputs.length === 0) {
+            const resultStr = typeof result === 'object' ? JSON.stringify(result, null, 2) : String(result);
+            addLine(`→ ${resultStr}`, 'success');
+          }
+          
+          addLine('', 'output');
+          addLine('✅ JavaScript execution completed successfully', 'success');
+          
+        } catch (error) {
+          addLine(`❌ Runtime Error: ${error}`, 'error');
+        } finally {
+          // Restore original console methods
+          console.log = originalConsoleLog;
+          console.error = originalConsoleError;
+          console.warn = originalConsoleWarn;
+        }
+        
+      } else if (language === 'python') {
+        // Python code simulation (since we can't run Python in browser)
+        addLine('# Python Execution Simulation:', 'info');
+        addLine('', 'output');
+        
+        // Parse and simulate Python code
+        const lines = code.split('\n');
+        for (const line of lines) {
+          const trimmedLine = line.trim();
+          if (trimmedLine.startsWith('print(')) {
+            // Extract content from print statement
+            const match = trimmedLine.match(/print\((.*)\)/);
+            if (match) {
+              try {
+                // Simple evaluation for basic print statements
+                let content = match[1];
+                
+                // Handle string literals
+                if (content.startsWith('"') && content.endsWith('"')) {
+                  content = content.slice(1, -1);
+                } else if (content.startsWith("'") && content.endsWith("'")) {
+                  content = content.slice(1, -1);
+                }
+                
+                addLine(content, 'output');
+              } catch (e) {
+                addLine(trimmedLine, 'output');
+              }
+            }
+          } else if (trimmedLine.startsWith('#')) {
+            // Comment
+            addLine(`# ${trimmedLine.substring(1)}`, 'info');
+          } else if (trimmedLine && !trimmedLine.includes('def ') && !trimmedLine.includes('class ')) {
+            // Other statements
+            addLine(`→ ${trimmedLine}`, 'output');
+          }
+        }
+        
+        addLine('', 'output');
+        addLine('✅ Python simulation completed', 'success');
+        addLine('💡 Note: This is a simulation. For real Python execution, use a Python environment.', 'info');
+        
+      } else if (language === 'html') {
+        // HTML preview
+        addLine('🌐 HTML Preview:', 'info');
+        addLine('', 'output');
+        addLine('📄 HTML content loaded successfully', 'success');
+        addLine('🔍 To view the rendered HTML, save the file and open it in a browser', 'info');
+        
+        // Count elements
+        const elementMatches = code.match(/<[^/][^>]*>/g) || [];
+        addLine(`📊 Found ${elementMatches.length} HTML elements`, 'info');
+        
+      } else {
+        // Generic code execution
+        addLine(`📝 ${language.toUpperCase()} Code Analysis:`, 'info');
+        addLine('', 'output');
+        
+        const lines = code.split('\n').filter(line => line.trim());
+        addLine(`📊 Lines of code: ${lines.length}`, 'info');
+        addLine(`📏 Characters: ${code.length}`, 'info');
+        
+        // Look for common patterns
+        if (code.includes('function') || code.includes('=>')) {
+          addLine('🔧 Functions detected', 'info');
+        }
+        if (code.includes('class ')) {
+          addLine('🏗️  Classes detected', 'info');
+        }
+        if (code.includes('import ') || code.includes('require(')) {
+          addLine('📦 Imports/Dependencies detected', 'info');
+        }
+        
+        addLine('', 'output');
+        addLine('✅ Code analysis completed', 'success');
+      }
+      
+    } catch (error) {
+      addLine(`❌ Execution Error: ${error}`, 'error');
+    }
+  };
+
   const executeCommand = async (command: string) => {
     if (!command.trim()) return;
 
@@ -383,18 +526,12 @@ const Terminal: React.FC<TerminalProps> = ({ isOpen, onClose, onToggleSize, isMi
     }
   };
 
+  // Set up the global function for code execution from editor
   useEffect(() => {
-    if (onRunCode) {
-      (window as any).terminalExecuteCode = (code: string, language: string) => {
-        addLine(`🚀 Executing ${language} code...`, 'info');
-        addLine('', 'output');
-        addLine('// Code execution simulation', 'output');
-        addLine(`console.log("Running ${language} code...");`, 'output');
-        addLine('', 'output');
-        addLine('✅ Code executed successfully', 'success');
-      };
-    }
-  }, [onRunCode, activeTerminalId]);
+    (window as any).terminalExecuteCode = (code: string, language: string) => {
+      executeRealCode(code, language);
+    };
+  }, [activeTerminalId]);
 
   if (!isOpen) return null;
 
