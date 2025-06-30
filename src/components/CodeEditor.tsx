@@ -318,11 +318,30 @@ print(f"Hello from {fileName}!")`;
       const newYdoc = new Y.Doc();
       
       // Create WebSocket provider for real-time collaboration
+      // Using a more robust WebSocket configuration
+      const roomId = `olive-${projectId}-${activeFile}`;
       const newWsProvider = new WebsocketProvider(
-        'wss://demos.yjs.dev', // Free demo server - replace with your own in production
-        `${projectId}-${activeFile}`, // Unique room ID for this project and file
-        newYdoc
+        'wss://y-websocket-server.herokuapp.com', // Alternative public server
+        roomId,
+        newYdoc,
+        {
+          connect: true,
+          // Add connection parameters for better reliability
+          params: {
+            room: roomId,
+            user: 'olive-user',
+            timestamp: Date.now().toString()
+          }
+        }
       );
+
+      // Fallback to local-only mode if WebSocket fails
+      newWsProvider.on('status', ({ status }: { status: string }) => {
+        console.log('WebSocket status:', status);
+        if (status === 'disconnected') {
+          console.warn('WebSocket disconnected, running in local-only mode');
+        }
+      });
 
       // Get the shared text type
       const ytext = newYdoc.getText('monaco');
@@ -552,7 +571,7 @@ print(f"Hello from {fileName}!")`;
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
               <span>🌐 Collaborative Mode Active</span>
-              <span>Room: {projectId}-{activeFile}</span>
+              <span>Room: olive-{projectId}-{activeFile}</span>
               {wsProvider && (
                 <span className={wsProvider.wsconnected ? 'text-green-600' : 'text-red-600'}>
                   {wsProvider.wsconnected ? '● Connected' : '● Disconnected'}
