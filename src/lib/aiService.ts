@@ -20,27 +20,29 @@ interface AIRequest {
 }
 
 class AIService {
-  private openrouterApiKey: string;
+  private deepseekApiKey: string;
+  private llamaApiKey: string;
   private googleApiKey: string;
   private siteUrl: string;
   private siteName: string;
 
   constructor() {
-    this.openrouterApiKey = import.meta.env.VITE_OPENROUTER_API_KEY || '';
+    this.deepseekApiKey = import.meta.env.VITE_DEEPSEEK_API_KEY || '';
+    this.llamaApiKey = import.meta.env.VITE_LLAMA_API_KEY || '';
     this.googleApiKey = import.meta.env.VITE_GOOGLE_API_KEY || '';
     this.siteUrl = import.meta.env.VITE_SITE_URL || 'http://localhost:5173';
     this.siteName = import.meta.env.VITE_SITE_NAME || 'Olive Code Editor';
   }
 
   async callLlama(request: AIRequest): Promise<AIResponse> {
-    if (!this.openrouterApiKey) {
-      throw new Error('OpenRouter API key not configured for Llama');
+    if (!this.llamaApiKey) {
+      throw new Error('Llama API key not configured');
     }
 
     const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${this.openrouterApiKey}`,
+        'Authorization': `Bearer ${this.llamaApiKey}`,
         'HTTP-Referer': this.siteUrl,
         'X-Title': this.siteName,
         'Content-Type': 'application/json',
@@ -67,14 +69,14 @@ class AIService {
   }
 
   async callDeepSeek(request: AIRequest): Promise<AIResponse> {
-    if (!this.openrouterApiKey) {
-      throw new Error('OpenRouter API key not configured for DeepSeek');
+    if (!this.deepseekApiKey) {
+      throw new Error('DeepSeek API key not configured');
     }
 
     const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${this.openrouterApiKey}`,
+        'Authorization': `Bearer ${this.deepseekApiKey}`,
         'HTTP-Referer': this.siteUrl,
         'X-Title': this.siteName,
         'Content-Type': 'application/json',
@@ -217,8 +219,10 @@ class AIService {
   }
 
   isConfigured(modelId: string): boolean {
-    if (modelId === 'llama-4-maverick' || modelId === 'deepseek') {
-      return !!this.openrouterApiKey;
+    if (modelId === 'llama-4-maverick') {
+      return !!this.llamaApiKey;
+    } else if (modelId === 'deepseek') {
+      return !!this.deepseekApiKey;
     } else if (modelId.startsWith('gemini-')) {
       return !!this.googleApiKey;
     }
@@ -227,8 +231,8 @@ class AIService {
 
   getConfigurationStatus(): Record<string, boolean> {
     return {
-      llama: !!this.openrouterApiKey,
-      deepseek: !!this.openrouterApiKey,
+      llama: !!this.llamaApiKey,
+      deepseek: !!this.deepseekApiKey,
       google: !!this.googleApiKey,
     };
   }
