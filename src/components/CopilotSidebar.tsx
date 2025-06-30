@@ -1,6 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Send, Loader2, X, Brain, Copy, Check, ChevronDown, Paperclip, Mic } from 'lucide-react';
-import { aiService } from '../lib/aiService';
 
 interface CopilotSidebarProps {
   isOpen: boolean;
@@ -32,7 +31,6 @@ const CopilotSidebar: React.FC<CopilotSidebarProps> = ({ isOpen, onClose, curren
   const [selectedModel, setSelectedModel] = useState('claude-sonnet-3.5');
   const [showModelDropdown, setShowModelDropdown] = useState(false);
   const [showWelcome, setShowWelcome] = useState(true);
-  const [apiError, setApiError] = useState<string | null>(null);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLInputElement>(null);
@@ -129,12 +127,6 @@ const CopilotSidebar: React.FC<CopilotSidebarProps> = ({ isOpen, onClose, curren
   const handleSendMessage = async () => {
     if (!query.trim()) return;
 
-    // Check if API is configured
-    if (!aiService.isConfigured(selectedModel)) {
-      setApiError(`API key not configured for ${selectedModel}. Please add the API key to your .env file.`);
-      return;
-    }
-
     const userMessage: Message = {
       id: Date.now().toString(),
       type: 'user',
@@ -146,50 +138,45 @@ const CopilotSidebar: React.FC<CopilotSidebarProps> = ({ isOpen, onClose, curren
     setQuery('');
     setIsLoading(true);
     setShowWelcome(false);
-    setApiError(null);
 
     try {
-      // Prepare messages for AI
-      const aiMessages = [
-        {
-          role: 'system' as const,
-          content: `You are an AI coding assistant. You have access to the current code context: ${currentCode ? `\n\nCurrent code:\n${currentCode}` : 'No code currently selected.'}`
-        },
-        ...messages.map(msg => ({
-          role: msg.type === 'user' ? 'user' as const : 'assistant' as const,
-          content: msg.content
-        })),
-        {
-          role: 'user' as const,
-          content: userMessage.content
-        }
-      ];
-
-      const response = await aiService.generateResponse(selectedModel, aiMessages);
+      // Simulate AI response
+      await new Promise(resolve => setTimeout(resolve, 1000 + Math.random() * 2000));
       
       const assistantMessage: Message = {
         id: (Date.now() + 1).toString(),
         type: 'assistant',
-        content: response.content,
+        content: generateMockResponse(userMessage.content, currentCode, selectedModel),
         timestamp: new Date()
       };
 
       setMessages(prev => [...prev, assistantMessage]);
-    } catch (error) {
-      console.error('AI request failed:', error);
-      setApiError(error instanceof Error ? error.message : 'Failed to get AI response');
-      
-      // Add error message to chat
-      const errorMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        type: 'assistant',
-        content: `Sorry, I encountered an error: ${error instanceof Error ? error.message : 'Unknown error'}. Please check your API configuration.`,
-        timestamp: new Date()
-      };
-      setMessages(prev => [...prev, errorMessage]);
+    } catch (err) {
+      console.error('AI request failed:', err);
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const generateMockResponse = (userQuery: string, code: string, model: string): string => {
+    const selectedModelInfo = aiModels.find(m => m.id === model);
+    const modelName = selectedModelInfo?.name || 'AI Assistant';
+    
+    const query = userQuery.toLowerCase();
+    
+    if (query.includes('explain') || query.includes('what does')) {
+      return `I'm ${modelName}, and I can help explain this code. Based on the current context, I can see you're working with a React application. The code structure follows modern React patterns with TypeScript integration.\n\nWould you like me to explain any specific part in more detail?`;
+    }
+    
+    if (query.includes('optimize') || query.includes('improve')) {
+      return `As ${modelName}, here are my optimization suggestions:\n\n1. **Performance**: Consider using React.memo() for components that don't need frequent re-renders\n2. **Code Structure**: Extract custom hooks for reusable logic\n3. **TypeScript**: Add more specific type definitions\n\nWould you like me to elaborate on any of these suggestions?`;
+    }
+    
+    if (query.includes('bug') || query.includes('error') || query.includes('fix')) {
+      return `I'm ${modelName} and I can help debug this issue. Common problems I notice:\n\n• **State Management**: Ensure state updates are properly handled\n• **Dependencies**: Check if all dependencies are correctly listed\n• **Type Safety**: Verify TypeScript types match expected values\n\nCan you share the specific error message you're seeing?`;
+    }
+    
+    return `Hello! I'm ${modelName}. I understand you're asking about "${userQuery}". I'm here to help with:\n\n• **Code Explanation**: Breaking down complex logic\n• **Debugging**: Finding and fixing issues\n• **Optimization**: Improving performance and structure\n• **Best Practices**: Following modern development standards\n\nCould you provide more specific details about what you'd like assistance with?`;
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -251,15 +238,11 @@ const CopilotSidebar: React.FC<CopilotSidebarProps> = ({ isOpen, onClose, curren
             <div className="w-6 h-6 bg-gradient-to-br from-blue-500 via-blue-600 to-indigo-600 rounded-lg flex items-center justify-center shadow-lg">
               <Brain className="w-3 h-3 text-white" />
             </div>
-            <div className={`absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full animate-pulse ${
-              aiService.isConfigured(selectedModel) ? 'bg-green-400' : 'bg-red-400'
-            }`}></div>
+            <div className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
           </div>
           <div>
             <h3 className={`font-semibold ${themeClasses.text} text-xs`}>Ask Copilot</h3>
-            <p className={`text-xs ${themeClasses.textSecondary}`}>
-              {aiService.isConfigured(selectedModel) ? 'AI-powered assistant' : 'API key required'}
-            </p>
+            <p className={`text-xs ${themeClasses.textSecondary}`}>AI-powered assistant</p>
           </div>
         </div>
         
@@ -271,13 +254,6 @@ const CopilotSidebar: React.FC<CopilotSidebarProps> = ({ isOpen, onClose, curren
           <X className={`w-3 h-3 ${themeClasses.textSecondary}`} />
         </button>
       </div>
-
-      {/* API Error Banner */}
-      {apiError && (
-        <div className="px-3 py-2 bg-red-50 border-b border-red-200">
-          <p className="text-xs text-red-700">{apiError}</p>
-        </div>
-      )}
 
       {/* Content Area */}
       <div className="flex-1 flex flex-col min-h-0">
@@ -291,10 +267,7 @@ const CopilotSidebar: React.FC<CopilotSidebarProps> = ({ isOpen, onClose, curren
             <h2 className={`text-lg font-semibold ${themeClasses.text} mb-2`}>Ask Copilot</h2>
             
             <p className={`text-xs ${themeClasses.textSecondary} mb-4 leading-relaxed max-w-xs`}>
-              {aiService.isConfigured(selectedModel) 
-                ? 'Copilot is powered by AI, so mistakes are possible. Review output carefully before use.'
-                : 'Please configure API keys in your .env file to use AI features.'
-              }
+              Copilot is powered by AI, so mistakes are possible. Review output carefully before use.
             </p>
           </div>
         )}
@@ -406,12 +379,7 @@ const CopilotSidebar: React.FC<CopilotSidebarProps> = ({ isOpen, onClose, curren
                 onClick={() => setShowModelDropdown(!showModelDropdown)}
                 className={`w-full flex items-center justify-between px-2 py-1.5 text-xs border rounded transition-all duration-200 ${themeClasses.input} ${themeClasses.border} ${themeClasses.surfaceHover}`}
               >
-                <div className="flex items-center space-x-2">
-                  <span className={`font-medium ${themeClasses.text}`}>{selectedModelInfo?.name || 'Claude Sonnet 3.5'}</span>
-                  {!aiService.isConfigured(selectedModel) && (
-                    <span className="w-2 h-2 bg-red-400 rounded-full" title="API key required"></span>
-                  )}
-                </div>
+                <span className={`font-medium ${themeClasses.text}`}>{selectedModelInfo?.name || 'Claude Sonnet 3.5'}</span>
                 <ChevronDown className={`w-3 h-3 transition-transform duration-200 ${showModelDropdown ? 'rotate-180' : ''}`} />
               </button>
 
@@ -439,9 +407,6 @@ const CopilotSidebar: React.FC<CopilotSidebarProps> = ({ isOpen, onClose, curren
                               <Check className="w-2.5 h-2.5" />
                             )}
                             <span className="font-medium">{model.name}</span>
-                            {!aiService.isConfigured(model.id) && (
-                              <span className="w-1.5 h-1.5 bg-red-400 rounded-full" title="API key required"></span>
-                            )}
                           </div>
                           <span className={`text-xs ${selectedModel === model.id ? 'text-blue-100' : themeClasses.textSecondary}`}>
                             {model.speed}
@@ -475,7 +440,7 @@ const CopilotSidebar: React.FC<CopilotSidebarProps> = ({ isOpen, onClose, curren
               onKeyPress={handleKeyPress}
               placeholder="Ask Copilot..."
               className={`flex-1 bg-transparent text-xs focus:outline-none ${themeClasses.text}`}
-              disabled={isLoading || !aiService.isConfigured(selectedModel)}
+              disabled={isLoading}
             />
 
             {/* Action Buttons */}
@@ -489,8 +454,8 @@ const CopilotSidebar: React.FC<CopilotSidebarProps> = ({ isOpen, onClose, curren
               
               <button
                 onClick={handleSendMessage}
-                disabled={!query.trim() || isLoading || !aiService.isConfigured(selectedModel)}
-                className={`p-1 ${themeClasses.surfaceHover} rounded transition-all duration-200 disabled:opacity-50`}
+                disabled={!query.trim() || isLoading}
+                className={`p-1 ${themeClasses.surfaceHover} rounded transition-all duration-200`}
                 title="Send message"
               >
                 {isLoading ? (
