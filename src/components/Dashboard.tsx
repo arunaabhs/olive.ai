@@ -27,8 +27,28 @@ const Dashboard: React.FC<DashboardProps> = ({ projectId: propProjectId, collabo
   const editorRef = useRef<any>(null);
   const { user } = useAuth();
 
-  // Use provided projectId or generate one based on user
-  const projectId = propProjectId || (user?.id ? `user-${user.id}` : 'guest-project');
+  // Generate project ID based on environment and user
+  const generateProjectId = () => {
+    if (propProjectId) return propProjectId;
+    
+    // Check if in WebContainer environment
+    const isWebContainer = window.location.hostname.includes('webcontainer') || 
+                          window.location.hostname.includes('stackblitz') ||
+                          window.location.hostname.includes('bolt.new');
+    
+    if (isWebContainer) {
+      // In WebContainer, use a session-based ID
+      const sessionId = sessionStorage.getItem('olive-session-id') || 
+                       `session-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+      sessionStorage.setItem('olive-session-id', sessionId);
+      return sessionId;
+    }
+    
+    // For regular environments, use user-based ID
+    return user?.id ? `user-${user.id}` : `guest-${Date.now()}`;
+  };
+
+  const projectId = generateProjectId();
 
   const handleGetCurrentCode = () => {
     if (editorRef.current) {
