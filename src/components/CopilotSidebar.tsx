@@ -29,7 +29,7 @@ const CopilotSidebar: React.FC<CopilotSidebarProps> = ({ isOpen, onClose, curren
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null);
-  const [selectedModel, setSelectedModel] = useState('llama-4-maverick');
+  const [selectedModel, setSelectedModel] = useState('claude-sonnet-3.5');
   const [showModelDropdown, setShowModelDropdown] = useState(false);
   const [showWelcome, setShowWelcome] = useState(true);
   const [apiError, setApiError] = useState<string | null>(null);
@@ -40,11 +40,11 @@ const CopilotSidebar: React.FC<CopilotSidebarProps> = ({ isOpen, onClose, curren
 
   const aiModels: AIModel[] = [
     {
-      id: 'llama-4-maverick',
-      name: 'Llama 4 Maverick',
-      provider: 'Meta',
+      id: 'claude-sonnet-3.5',
+      name: 'Claude Sonnet 3.5',
+      provider: 'Anthropic',
       speed: '1x',
-      description: 'Advanced reasoning and multimodal capabilities'
+      description: 'Best for complex reasoning and code analysis'
     },
     {
       id: 'gemini-2.0-flash',
@@ -393,7 +393,7 @@ const CopilotSidebar: React.FC<CopilotSidebarProps> = ({ isOpen, onClose, curren
                 className={`w-full flex items-center justify-between px-2 py-1.5 text-xs border rounded transition-all duration-200 ${themeClasses.input} ${themeClasses.border} ${themeClasses.surfaceHover}`}
               >
                 <div className="flex items-center space-x-2">
-                  <span className={`font-medium ${themeClasses.text}`}>{selectedModelInfo?.name || 'Llama 4 Maverick'}</span>
+                  <span className={`font-medium ${themeClasses.text}`}>{selectedModelInfo?.name || 'Claude Sonnet 3.5'}</span>
                   {!aiService.isConfigured(selectedModel) && (
                     <span className="w-2 h-2 bg-red-400 rounded-full" title="API key required"></span>
                   )}
