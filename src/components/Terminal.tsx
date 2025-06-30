@@ -75,7 +75,6 @@ const Terminal: React.FC<TerminalProps> = ({ isOpen, onClose, onToggleSize, isMi
   const [historyIndex, setHistoryIndex] = useState(-1);
   const [isExecuting, setIsExecuting] = useState(false);
   const [runningProcesses, setRunningProcesses] = useState<ProcessInfo[]>([]);
-  const [activeTab, setActiveTab] = useState('TERMINAL');
   const [position, setPosition] = useState({ x: 100, y: 100 });
   const [size, setSize] = useState({ width: 800, height: 500 });
   const [isDragging, setIsDragging] = useState(false);
@@ -102,8 +101,7 @@ const Terminal: React.FC<TerminalProps> = ({ isOpen, onClose, onToggleSize, isMi
     surfaceHover: 'hover:bg-gray-700',
     headerBg: 'bg-gray-800',
     input: 'bg-transparent text-gray-100',
-    tabActive: 'bg-gray-700 text-gray-100 border-b-2 border-orange-500',
-    tabInactive: 'text-gray-400 hover:text-gray-200 hover:bg-gray-700'
+    scrollbar: 'scrollbar-thin scrollbar-thumb-gray-600 scrollbar-track-gray-800'
   } : {
     bg: 'bg-white',
     border: 'border-gray-200',
@@ -113,8 +111,7 @@ const Terminal: React.FC<TerminalProps> = ({ isOpen, onClose, onToggleSize, isMi
     surfaceHover: 'hover:bg-white/60',
     headerBg: 'bg-gray-50',
     input: 'bg-transparent text-gray-800',
-    tabActive: 'bg-white text-gray-800 border-b-2 border-orange-500',
-    tabInactive: 'text-gray-600 hover:text-gray-800 hover:bg-white/60'
+    scrollbar: 'scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100'
   };
 
   const activeTerminal = terminals.find(t => t.id === activeTerminalId) || terminals[0];
@@ -234,16 +231,6 @@ const Terminal: React.FC<TerminalProps> = ({ isOpen, onClose, onToggleSize, isMi
     }
   };
 
-  // Cut functionality
-  const handleCut = () => {
-    const selectedText = window.getSelection()?.toString();
-    if (selectedText) {
-      navigator.clipboard.writeText(selectedText);
-      // Remove selected text (simplified implementation)
-      window.getSelection()?.deleteFromDocument();
-    }
-  };
-
   // Copy functionality
   const handleCopy = () => {
     const selectedText = window.getSelection()?.toString();
@@ -275,32 +262,6 @@ const Terminal: React.FC<TerminalProps> = ({ isOpen, onClose, onToggleSize, isMi
       }
     } catch (err) {
       console.error('Failed to paste:', err);
-    }
-  };
-
-  // Select all functionality
-  const handleSelectAll = () => {
-    if (terminalRef.current) {
-      const range = document.createRange();
-      range.selectNodeContents(terminalRef.current);
-      const selection = window.getSelection();
-      selection?.removeAllRanges();
-      selection?.addRange(range);
-    }
-  };
-
-  // Find functionality
-  const handleFind = () => {
-    const searchTerm = prompt('Search in terminal:');
-    if (searchTerm && terminalRef.current) {
-      const content = terminalRef.current.textContent || '';
-      const index = content.toLowerCase().indexOf(searchTerm.toLowerCase());
-      if (index !== -1) {
-        // Highlight found text (simplified implementation)
-        addLine(`🔍 Found "${searchTerm}" in terminal output`, 'info');
-      } else {
-        addLine(`🔍 "${searchTerm}" not found in terminal output`, 'warning');
-      }
     }
   };
 
@@ -670,10 +631,6 @@ const Terminal: React.FC<TerminalProps> = ({ isOpen, onClose, onToggleSize, isMi
           e.preventDefault();
           handleRedo();
           break;
-        case 'x':
-          e.preventDefault();
-          handleCut();
-          break;
         case 'c':
           e.preventDefault();
           handleCopy();
@@ -681,14 +638,6 @@ const Terminal: React.FC<TerminalProps> = ({ isOpen, onClose, onToggleSize, isMi
         case 'v':
           e.preventDefault();
           handlePaste();
-          break;
-        case 'a':
-          e.preventDefault();
-          handleSelectAll();
-          break;
-        case 'f':
-          e.preventDefault();
-          handleFind();
           break;
         case 'l':
           e.preventDefault();
@@ -724,13 +673,6 @@ const Terminal: React.FC<TerminalProps> = ({ isOpen, onClose, onToggleSize, isMi
 
   if (!isOpen) return null;
 
-  const tabs = [
-    { id: 'PROBLEMS', name: 'PROBLEMS', count: 0 },
-    { id: 'OUTPUT', name: 'OUTPUT', count: null },
-    { id: 'DEBUG_CONSOLE', name: 'DEBUG CONSOLE', count: null },
-    { id: 'TERMINAL', name: 'TERMINAL', count: null }
-  ];
-
   return (
     <div
       ref={windowRef}
@@ -746,202 +688,159 @@ const Terminal: React.FC<TerminalProps> = ({ isOpen, onClose, onToggleSize, isMi
         maxHeight: '90vh'
       }}
     >
-      {/* Terminal Header with Enhanced Drag Handle */}
+      {/* Terminal Header */}
       <div
         className={`flex items-center justify-between ${themeClasses.headerBg} ${themeClasses.border} border-b rounded-t-lg`}
       >
-        {/* Window Controls and Drag Handle */}
-        <div className="flex items-center space-x-2 px-3 py-2">
-          <div className="flex space-x-1.5">
-            <div className="w-3 h-3 bg-red-500 rounded-full cursor-pointer hover:bg-red-600 transition-colors" onClick={onClose}></div>
-            <div className="w-3 h-3 bg-yellow-500 rounded-full cursor-pointer hover:bg-yellow-600 transition-colors" onClick={onToggleSize}></div>
-            <div className="w-3 h-3 bg-green-500 rounded-full cursor-pointer hover:bg-green-600 transition-colors"></div>
-          </div>
-          
-          {/* Enhanced Drag Handle */}
+        {/* Drag Handle and Title */}
+        <div className="flex items-center space-x-3 px-4 py-3">
           <div 
-            className="drag-handle flex items-center space-x-1 px-2 py-1 rounded cursor-move hover:bg-gray-600/20 transition-colors"
+            className="drag-handle flex items-center space-x-2 px-2 py-1 rounded cursor-move hover:bg-gray-600/20 transition-colors"
             onMouseDown={handleMouseDown}
             title="Drag to move terminal"
           >
             <GripHorizontal className={`w-4 h-4 ${themeClasses.textSecondary}`} />
-            <span className={`text-xs ${themeClasses.textSecondary} font-medium`}>Terminal</span>
+            <TerminalIcon className={`w-4 h-4 ${themeClasses.textSecondary}`} />
+            <span className={`text-sm ${themeClasses.text} font-medium`}>Terminal</span>
           </div>
         </div>
 
-        {/* Tabs */}
+        {/* Terminal Tabs and Actions */}
         {!isMinimized && (
-          <div className="flex items-center flex-1 justify-center">
-            {tabs.map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`px-3 py-1.5 text-xs font-medium transition-all duration-200 ${
-                  activeTab === tab.id 
-                    ? themeClasses.tabActive
-                    : themeClasses.tabInactive
-                }`}
-              >
-                <div className="flex items-center space-x-1.5">
-                  <span>{tab.name}</span>
-                  {tab.count !== null && (
-                    <span className={`px-1 py-0.5 text-xs rounded-full ${
-                      isDarkMode ? 'bg-gray-600 text-gray-300' : 'bg-gray-200 text-gray-600'
-                    }`}>
-                      {tab.count}
-                    </span>
+          <div className="flex items-center space-x-2 px-2">
+            {/* Terminal Tabs */}
+            <div className="flex items-center space-x-1 mr-3">
+              {terminals.map((terminal) => (
+                <div key={terminal.id} className="flex items-center">
+                  <button
+                    onClick={() => setActiveTerminalId(terminal.id)}
+                    className={`px-3 py-1.5 text-xs rounded transition-all duration-200 ${
+                      activeTerminalId === terminal.id
+                        ? 'bg-blue-600 text-white'
+                        : `${themeClasses.surface} ${themeClasses.text} ${themeClasses.surfaceHover}`
+                    }`}
+                  >
+                    {terminal.name}
+                  </button>
+                  {terminals.length > 1 && (
+                    <button
+                      onClick={() => closeTerminal(terminal.id)}
+                      className={`ml-1 p-0.5 ${themeClasses.surfaceHover} rounded transition-all duration-200`}
+                      title="Close Terminal"
+                    >
+                      <X className={`w-3 h-3 ${themeClasses.textSecondary}`} />
+                    </button>
                   )}
                 </div>
-              </button>
-            ))}
+              ))}
+            </div>
+
+            {/* Action Buttons */}
+            <button
+              onClick={handleUndo}
+              disabled={activeTerminal.historyIndex <= 0}
+              className={`p-1.5 rounded transition-all duration-200 ${
+                activeTerminal.historyIndex <= 0 
+                  ? 'opacity-50 cursor-not-allowed' 
+                  : `${themeClasses.surfaceHover} cursor-pointer`
+              }`}
+              title="Undo (Ctrl+Z)"
+            >
+              <span className={`text-sm ${themeClasses.textSecondary}`}>↶</span>
+            </button>
+            
+            <button
+              onClick={handleRedo}
+              disabled={activeTerminal.historyIndex >= activeTerminal.history.length - 1}
+              className={`p-1.5 rounded transition-all duration-200 ${
+                activeTerminal.historyIndex >= activeTerminal.history.length - 1
+                  ? 'opacity-50 cursor-not-allowed' 
+                  : `${themeClasses.surfaceHover} cursor-pointer`
+              }`}
+              title="Redo (Ctrl+Y)"
+            >
+              <span className={`text-sm ${themeClasses.textSecondary}`}>↷</span>
+            </button>
+
+            <div className="w-px h-4 bg-gray-300 mx-2"></div>
+
+            <button
+              onClick={createNewTerminal}
+              className={`p-1.5 ${themeClasses.surfaceHover} rounded transition-all duration-200`}
+              title="New Terminal"
+            >
+              <Plus className={`w-4 h-4 ${themeClasses.textSecondary}`} />
+            </button>
           </div>
         )}
-
-        {/* Terminal Actions */}
-        <div className="flex items-center space-x-1 px-2">
-          {!isMinimized && activeTab === 'TERMINAL' && (
-            <>
-              {/* Terminal Tabs */}
-              <div className="flex items-center space-x-1 mr-2">
-                {terminals.map((terminal) => (
-                  <div key={terminal.id} className="flex items-center">
-                    <button
-                      onClick={() => setActiveTerminalId(terminal.id)}
-                      className={`px-2 py-1 text-xs rounded transition-all duration-200 ${
-                        activeTerminalId === terminal.id
-                          ? 'bg-blue-600 text-white'
-                          : `${themeClasses.surface} ${themeClasses.text} ${themeClasses.surfaceHover}`
-                      }`}
-                    >
-                      {terminal.name}
-                    </button>
-                    {terminals.length > 1 && (
-                      <button
-                        onClick={() => closeTerminal(terminal.id)}
-                        className={`ml-1 p-0.5 ${themeClasses.surfaceHover} rounded transition-all duration-200`}
-                        title="Close Terminal"
-                      >
-                        <X className={`w-2 h-2 ${themeClasses.textSecondary}`} />
-                      </button>
-                    )}
-                  </div>
-                ))}
-              </div>
-
-              {/* Action Buttons */}
-              <button
-                onClick={handleUndo}
-                disabled={activeTerminal.historyIndex <= 0}
-                className={`p-1 rounded transition-all duration-200 ${
-                  activeTerminal.historyIndex <= 0 
-                    ? 'opacity-50 cursor-not-allowed' 
-                    : `${themeClasses.surfaceHover} cursor-pointer`
-                }`}
-                title="Undo (Ctrl+Z)"
-              >
-                <span className={`text-xs ${themeClasses.textSecondary}`}>↶</span>
-              </button>
-              
-              <button
-                onClick={handleRedo}
-                disabled={activeTerminal.historyIndex >= activeTerminal.history.length - 1}
-                className={`p-1 rounded transition-all duration-200 ${
-                  activeTerminal.historyIndex >= activeTerminal.history.length - 1
-                    ? 'opacity-50 cursor-not-allowed' 
-                    : `${themeClasses.surfaceHover} cursor-pointer`
-                }`}
-                title="Redo (Ctrl+Y)"
-              >
-                <span className={`text-xs ${themeClasses.textSecondary}`}>↷</span>
-              </button>
-
-              <select className={`text-xs px-2 py-1 rounded ${themeClasses.surface} ${themeClasses.border} ${themeClasses.text}`}>
-                <option>bash</option>
-                <option>zsh</option>
-                <option>powershell</option>
-              </select>
-              
-              <button
-                onClick={createNewTerminal}
-                className={`p-1 ${themeClasses.surfaceHover} rounded transition-all duration-200`}
-                title="New Terminal"
-              >
-                <Plus className={`w-3 h-3 ${themeClasses.textSecondary}`} />
-              </button>
-              
-              <button
-                className={`p-1 ${themeClasses.surfaceHover} rounded transition-all duration-200`}
-                title="Split Terminal"
-              >
-                <Code className={`w-3 h-3 ${themeClasses.textSecondary}`} />
-              </button>
-            </>
-          )}
-          
+        
+        {/* Window Controls */}
+        <div className="flex items-center space-x-2 px-3">
           <button
             onClick={onToggleSize}
-            className={`p-1 ${themeClasses.surfaceHover} rounded transition-all duration-200`}
+            className={`p-1.5 ${themeClasses.surfaceHover} rounded transition-all duration-200`}
             title={isMinimized ? "Maximize" : "Minimize"}
           >
             {isMinimized ? (
-              <Maximize2 className={`w-3 h-3 ${themeClasses.textSecondary}`} />
+              <Maximize2 className={`w-4 h-4 ${themeClasses.textSecondary}`} />
             ) : (
-              <Minimize2 className={`w-3 h-3 ${themeClasses.textSecondary}`} />
+              <Minimize2 className={`w-4 h-4 ${themeClasses.textSecondary}`} />
             )}
           </button>
           
           <button
             onClick={onClose}
-            className={`p-1 ${themeClasses.surfaceHover} rounded transition-all duration-200`}
+            className={`p-1.5 hover:bg-red-500/20 rounded transition-all duration-200`}
             title="Close Terminal"
           >
-            <X className={`w-3 h-3 ${themeClasses.textSecondary}`} />
+            <X className={`w-4 h-4 ${themeClasses.textSecondary} hover:text-red-500`} />
           </button>
         </div>
       </div>
 
       {/* Terminal Content */}
-      {!isMinimized && activeTab === 'TERMINAL' && (
+      {!isMinimized && (
         <div className="flex-1 flex flex-col">
           <div
             ref={terminalRef}
-            className={`flex-1 overflow-y-auto p-4 font-mono text-sm ${themeClasses.bg} select-text`}
+            className={`flex-1 overflow-y-auto p-4 font-mono text-sm ${themeClasses.bg} select-text ${themeClasses.scrollbar}`}
             style={{ 
               backgroundColor: isDarkMode ? '#1a1a1a' : '#ffffff',
-              height: size.height - 100
+              height: size.height - 120,
+              maxHeight: size.height - 120
             }}
           >
             {activeTerminal.lines.map((line) => (
               <div
                 key={line.id}
-                className={`mb-1 ${getLineColor(line.type)}`}
+                className={`mb-1 ${getLineColor(line.type)} break-words`}
               >
                 {line.content}
               </div>
             ))}
             
             {/* Current command line */}
-            <div className="flex items-center space-x-2 mt-2">
-              <span className="text-green-600 font-medium">{activeTerminal.currentDirectory} $</span>
+            <div className="flex items-center space-x-2 mt-2 sticky bottom-0">
+              <span className="text-green-600 font-medium flex-shrink-0">{activeTerminal.currentDirectory} $</span>
               <input
                 ref={inputRef}
                 type="text"
                 value={activeTerminal.currentCommand}
                 onChange={(e) => updateCurrentCommand(e.target.value)}
                 onKeyDown={handleKeyDown}
-                className={`flex-1 outline-none font-mono ${themeClasses.input}`}
+                className={`flex-1 outline-none font-mono ${themeClasses.input} min-w-0`}
                 disabled={isExecuting}
                 placeholder={isExecuting ? "Executing..." : "Type a command..."}
                 style={{ backgroundColor: 'transparent' }}
               />
               {isExecuting && (
-                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse flex-shrink-0"></div>
               )}
             </div>
           </div>
 
           {/* Status Bar */}
-          <div className={`px-4 py-2 text-xs ${themeClasses.textSecondary} border-t rounded-b-lg ${themeClasses.headerBg} ${themeClasses.border}`}>
+          <div className={`px-4 py-2 text-xs ${themeClasses.textSecondary} border-t rounded-b-lg ${themeClasses.headerBg} ${themeClasses.border} flex-shrink-0`}>
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-4">
                 <span className="font-light">Terminal {activeTerminalId} - {activeTerminal.lines.length} lines</span>
@@ -962,24 +861,6 @@ const Terminal: React.FC<TerminalProps> = ({ isOpen, onClose, onToggleSize, isMi
                 <span className={themeClasses.textSecondary}>{terminals.length} terminal{terminals.length > 1 ? 's' : ''}</span>
               </div>
             </div>
-          </div>
-        </div>
-      )}
-
-      {/* Other Tab Contents */}
-      {!isMinimized && activeTab !== 'TERMINAL' && (
-        <div className={`flex-1 flex items-center justify-center p-8 ${themeClasses.bg} rounded-b-lg`}>
-          <div className="text-center">
-            <div className={`text-4xl mb-4 ${themeClasses.textSecondary}`}>
-              {activeTab === 'PROBLEMS' && '⚠️'}
-              {activeTab === 'OUTPUT' && '📄'}
-              {activeTab === 'DEBUG_CONSOLE' && '🐛'}
-            </div>
-            <p className={`${themeClasses.textSecondary} text-sm`}>
-              {activeTab === 'PROBLEMS' && 'No problems detected'}
-              {activeTab === 'OUTPUT' && 'No output available'}
-              {activeTab === 'DEBUG_CONSOLE' && 'Debug console is ready'}
-            </p>
           </div>
         </div>
       )}
