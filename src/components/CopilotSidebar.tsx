@@ -59,12 +59,12 @@ const CopilotSidebar: React.FC<CopilotSidebarProps> = ({ isOpen, onClose, curren
       isLive: true
     },
     {
-      id: 'llama-3.3',
-      name: 'Llama 3.3',
-      provider: 'Meta',
-      speed: '1x',
-      description: 'Large language model for complex tasks',
-      isLive: false
+      id: 'mistral-7b',
+      name: 'Mistral 7B',
+      provider: 'Mistral AI',
+      speed: '2x',
+      description: 'Efficient and powerful language model',
+      isLive: true
     }
   ];
 
@@ -175,8 +175,27 @@ const CopilotSidebar: React.FC<CopilotSidebarProps> = ({ isOpen, onClose, curren
           setApiError(error instanceof Error ? error.message : 'Failed to connect to DeepSeek API');
           responseContent = `❌ **DeepSeek API Error**: ${error instanceof Error ? error.message : 'Unknown error occurred'}\n\nPlease check your OpenRouter API key configuration or try again later.`;
         }
+      } else if (selectedModel === 'mistral-7b') {
+        // Use real Mistral 7B API via OpenRouter
+        try {
+          if (currentCode && currentCode.trim()) {
+            // If there's code context, use it
+            responseContent = await openRouterAPI.generateMistralCodeSuggestions(
+              currentCode,
+              'javascript', // You might want to detect language from file extension
+              userMessage.content
+            );
+          } else {
+            // General query without code context
+            responseContent = await openRouterAPI.generateMistralResponse(userMessage.content);
+          }
+        } catch (error) {
+          console.error('Mistral API Error:', error);
+          setApiError(error instanceof Error ? error.message : 'Failed to connect to Mistral API');
+          responseContent = `❌ **Mistral API Error**: ${error instanceof Error ? error.message : 'Unknown error occurred'}\n\nPlease check your OpenRouter API key configuration or try again later.`;
+        }
       } else {
-        // Mock responses for Llama (not integrated yet)
+        // Fallback for any other models
         await new Promise(resolve => setTimeout(resolve, 1000 + Math.random() * 2000));
         responseContent = generateMockResponse(userMessage.content, currentCode, selectedModel);
       }

@@ -112,11 +112,26 @@ export class OpenRouterAPI {
     }
   }
 
+  // DeepSeek R1 specific methods
   async generateDeepSeekResponse(prompt: string, context?: string): Promise<string> {
     return this.generateResponse(prompt, 'deepseek/deepseek-r1-0528:free', context);
   }
 
-  async generateCodeExplanation(code: string, language: string): Promise<string> {
+  // Mistral 7B specific methods
+  async generateMistralResponse(prompt: string, context?: string): Promise<string> {
+    return this.generateResponse(prompt, 'mistralai/mistral-7b-instruct:free', context);
+  }
+
+  async generateMistralCodeSuggestions(code: string, language: string, userQuery: string): Promise<string> {
+    const prompt = `I'm working with this ${language} code and have a question: ${userQuery}
+
+Please provide helpful suggestions, improvements, or answers related to this code.`;
+
+    return this.generateMistralResponse(prompt, code);
+  }
+
+  // General code-related methods that work with any model
+  async generateCodeExplanation(code: string, language: string, model: string = 'deepseek/deepseek-r1-0528:free'): Promise<string> {
     const prompt = `Please explain this ${language} code in detail:
 
 \`\`\`${language}
@@ -129,7 +144,7 @@ Provide a clear explanation of:
 3. Any potential improvements or best practices
 4. How it fits into a larger application context`;
 
-    return this.generateDeepSeekResponse(prompt, code);
+    return this.generateResponse(prompt, model, code);
   }
 
   async generateCodeSuggestions(code: string, language: string, userQuery: string): Promise<string> {
@@ -140,7 +155,7 @@ Please provide helpful suggestions, improvements, or answers related to this cod
     return this.generateDeepSeekResponse(prompt, code);
   }
 
-  async debugCode(code: string, language: string, errorMessage?: string): Promise<string> {
+  async debugCode(code: string, language: string, errorMessage?: string, model: string = 'deepseek/deepseek-r1-0528:free'): Promise<string> {
     const prompt = `Help me debug this ${language} code:
 
 ${errorMessage ? `Error message: ${errorMessage}` : 'Please identify potential issues and suggest fixes.'}
@@ -150,7 +165,7 @@ Please provide:
 2. Suggested fixes
 3. Best practices to prevent similar issues`;
 
-    return this.generateDeepSeekResponse(prompt, code);
+    return this.generateResponse(prompt, model, code);
   }
 }
 
