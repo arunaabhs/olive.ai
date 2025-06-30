@@ -20,35 +20,29 @@ interface AIRequest {
 }
 
 class AIService {
-  private openrouterApiKey: string;
+  private openaiApiKey: string;
   private anthropicApiKey: string;
   private googleApiKey: string;
-  private siteUrl: string;
-  private siteName: string;
 
   constructor() {
-    this.openrouterApiKey = import.meta.env.VITE_OPENROUTER_API_KEY || '';
+    this.openaiApiKey = import.meta.env.VITE_OPENAI_API_KEY || '';
     this.anthropicApiKey = import.meta.env.VITE_ANTHROPIC_API_KEY || '';
     this.googleApiKey = import.meta.env.VITE_GOOGLE_API_KEY || '';
-    this.siteUrl = import.meta.env.VITE_SITE_URL || 'http://localhost:5173';
-    this.siteName = import.meta.env.VITE_SITE_NAME || 'Olive Code Editor';
   }
 
-  async callDeepSeek(request: AIRequest): Promise<AIResponse> {
-    if (!this.openrouterApiKey) {
-      throw new Error('OpenRouter API key not configured for DeepSeek');
+  async callOpenAI(request: AIRequest): Promise<AIResponse> {
+    if (!this.openaiApiKey) {
+      throw new Error('OpenAI API key not configured');
     }
 
-    const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${this.openrouterApiKey}`,
-        'HTTP-Referer': this.siteUrl,
-        'X-Title': this.siteName,
+        'Authorization': `Bearer ${this.openaiApiKey}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'deepseek/deepseek-r1-0528',
+        model: request.model,
         messages: request.messages,
         temperature: request.temperature || 0.7,
         max_tokens: request.max_tokens || 1000,
@@ -57,7 +51,7 @@ class AIService {
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
-      throw new Error(`DeepSeek API error: ${response.statusText} - ${errorData.error?.message || 'Unknown error'}`);
+      throw new Error(`OpenAI API error: ${response.statusText} - ${errorData.error?.message || 'Unknown error'}`);
     }
 
     const data = await response.json();
@@ -204,8 +198,8 @@ class AIService {
     };
 
     try {
-      if (modelId === 'deepseek') {
-        return await this.callDeepSeek(request);
+      if (modelId === 'chatgpt') {
+        return await this.callOpenAI(request);
       } else if (modelId.startsWith('claude-')) {
         return await this.callAnthropic(request);
       } else if (modelId.startsWith('gemini-')) {
@@ -223,15 +217,15 @@ class AIService {
     const modelMap: Record<string, string> = {
       'claude-sonnet-3.5': 'claude-3-5-sonnet-20241022',
       'gemini-2.0-flash': 'gemini-2.0-flash-exp',
-      'deepseek': 'deepseek/deepseek-r1-0528',
+      'chatgpt': 'gpt-4o-mini',
     };
 
     return modelMap[modelId] || modelId;
   }
 
   isConfigured(modelId: string): boolean {
-    if (modelId === 'deepseek') {
-      return !!this.openrouterApiKey;
+    if (modelId === 'chatgpt') {
+      return !!this.openaiApiKey;
     } else if (modelId.startsWith('claude-')) {
       return !!this.anthropicApiKey;
     } else if (modelId.startsWith('gemini-')) {
@@ -242,7 +236,7 @@ class AIService {
 
   getConfigurationStatus(): Record<string, boolean> {
     return {
-      deepseek: !!this.openrouterApiKey,
+      openai: !!this.openaiApiKey,
       anthropic: !!this.anthropicApiKey,
       google: !!this.googleApiKey,
     };

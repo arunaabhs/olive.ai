@@ -54,11 +54,11 @@ const CopilotSidebar: React.FC<CopilotSidebarProps> = ({ isOpen, onClose, curren
       description: 'Fast and efficient for general tasks'
     },
     {
-      id: 'deepseek',
-      name: 'DeepSeek',
-      provider: 'DeepSeek',
+      id: 'chatgpt',
+      name: 'ChatGPT',
+      provider: 'OpenAI',
       speed: '1x',
-      description: 'Advanced reasoning and code understanding'
+      description: 'Advanced reasoning and creativity'
     }
   ];
 
