@@ -140,22 +140,66 @@ const CopilotSidebar: React.FC<CopilotSidebarProps> = ({ isOpen, onClose, curren
     setShowWelcome(false);
 
     try {
-      // Simulate AI response
-      await new Promise(resolve => setTimeout(resolve, 1000 + Math.random() * 2000));
+      let response;
+      
+      if (selectedModel === 'gemini-2.0-flash') {
+        // Use Gemini API
+        response = await callGeminiAPI(userMessage.content, currentCode);
+      } else {
+        // Simulate other AI responses
+        await new Promise(resolve => setTimeout(resolve, 1000 + Math.random() * 2000));
+        response = generateMockResponse(userMessage.content, currentCode, selectedModel);
+      }
       
       const assistantMessage: Message = {
         id: (Date.now() + 1).toString(),
         type: 'assistant',
-        content: generateMockResponse(userMessage.content, currentCode, selectedModel),
+        content: response,
         timestamp: new Date()
       };
 
       setMessages(prev => [...prev, assistantMessage]);
     } catch (err) {
       console.error('AI request failed:', err);
+      const errorMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        type: 'assistant',
+        content: 'Sorry, I encountered an error while processing your request. Please try again.',
+        timestamp: new Date()
+      };
+      setMessages(prev => [...prev, errorMessage]);
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const callGeminiAPI = async (userQuery: string, code: string): Promise<string> => {
+    const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+    
+    if (!apiKey) {
+      throw new Error('Gemini API key not configured');
+    }
+
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${apiKey}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        contents: [{
+          parts: [{
+            text: `You are a helpful coding assistant. The user is working with this code:\n\n${code}\n\nUser question: ${userQuery}`
+          }]
+        }]
+      })
+    });
+
+    if (!response.ok) {
+      throw new Error(`Gemini API error: ${response.status}`);
+    }
+
+    const data = await response.json();
+    return data.candidates?.[0]?.content?.parts?.[0]?.text || 'Sorry, I could not generate a response.';
   };
 
   const generateMockResponse = (userQuery: string, code: string, model: string): string => {
