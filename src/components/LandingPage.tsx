@@ -3,7 +3,6 @@ import { Link, useNavigate } from 'react-router-dom';
 import { ArrowRight, User, UserPlus, LogOut } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import AuthModal from './AuthModal';
-import Logo from './Logo';
 
 const LandingPage: React.FC = () => {
   const [showAuthModal, setShowAuthModal] = useState(false);
@@ -35,7 +34,6 @@ const LandingPage: React.FC = () => {
     return (
       <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: '#f0f7f0' }}>
         <div className="text-center">
-          <Logo size="lg" className="mx-auto mb-4" />
           <p className="text-gray-600 font-light">Loading...</p>
         </div>
       </div>
@@ -50,9 +48,8 @@ const LandingPage: React.FC = () => {
           onClick={handleLogoClick}
           className="flex items-center space-x-3 group"
         >
-          <Logo size="md" clickable onClick={handleLogoClick} />
           <span className="text-2xl font-light text-gray-800 group-hover:text-gray-900 transition-colors">
-            Olive
+            olive.ai
           </span>
         </button>
         <div className="flex items-center space-x-8">
@@ -155,7 +152,7 @@ const LandingPage: React.FC = () => {
               </button>
 
               <div className="flex items-center space-x-1 text-gray-500 text-sm font-light">
-                <span>New to Olive?</span>
+                <span>New to olive.ai?</span>
               </div>
             </div>
 
@@ -168,7 +165,7 @@ const LandingPage: React.FC = () => {
                 to="/dashboard"
                 className="inline-flex items-center space-x-2 text-gray-600 hover:text-gray-800 font-light transition-colors underline decoration-dotted underline-offset-4"
               >
-                <span>Try Olive Editor</span>
+                <span>Try olive.ai Editor</span>
                 <ArrowRight className="w-3 h-3" />
               </Link>
             </div>
