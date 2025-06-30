@@ -54,9 +54,9 @@ const CopilotSidebar: React.FC<CopilotSidebarProps> = ({ isOpen, onClose, curren
       description: 'Fast and efficient for general tasks'
     },
     {
-      id: 'llama',
-      name: 'Llama 3.1 405B',
-      provider: 'Meta',
+      id: 'deepseek',
+      name: 'DeepSeek',
+      provider: 'DeepSeek',
       speed: '1x',
       description: 'Advanced reasoning and code understanding'
     }

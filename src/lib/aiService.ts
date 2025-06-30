@@ -20,28 +20,26 @@ interface AIRequest {
 }
 
 class AIService {
-  private llamaApiKey: string;
+  private deepseekApiKey: string;
   private anthropicApiKey: string;
   private googleApiKey: string;
 
   constructor() {
-    this.llamaApiKey = import.meta.env.VITE_LLAMA_API_KEY || '';
+    this.deepseekApiKey = import.meta.env.VITE_DEEPSEEK_API_KEY || '';
     this.anthropicApiKey = import.meta.env.VITE_ANTHROPIC_API_KEY || '';
     this.googleApiKey = import.meta.env.VITE_GOOGLE_API_KEY || '';
   }
 
-  async callLlama(request: AIRequest): Promise<AIResponse> {
-    if (!this.llamaApiKey) {
-      throw new Error('Llama API key not configured');
+  async callDeepSeek(request: AIRequest): Promise<AIResponse> {
+    if (!this.deepseekApiKey) {
+      throw new Error('DeepSeek API key not configured');
     }
 
-    const response = await fetch('https://api.openrouter.ai/api/v1/chat/completions', {
+    const response = await fetch('https://api.deepseek.com/v1/chat/completions', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${this.llamaApiKey}`,
+        'Authorization': `Bearer ${this.deepseekApiKey}`,
         'Content-Type': 'application/json',
-        'HTTP-Referer': window.location.origin,
-        'X-Title': 'Olive Code Editor',
       },
       body: JSON.stringify({
         model: request.model,
@@ -53,7 +51,7 @@ class AIService {
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
-      throw new Error(`Llama API error: ${response.statusText} - ${errorData.error?.message || 'Unknown error'}`);
+      throw new Error(`DeepSeek API error: ${response.statusText} - ${errorData.error?.message || 'Unknown error'}`);
     }
 
     const data = await response.json();
@@ -200,8 +198,8 @@ class AIService {
     };
 
     try {
-      if (modelId === 'llama') {
-        return await this.callLlama(request);
+      if (modelId === 'deepseek') {
+        return await this.callDeepSeek(request);
       } else if (modelId.startsWith('claude-')) {
         return await this.callAnthropic(request);
       } else if (modelId.startsWith('gemini-')) {
@@ -219,15 +217,15 @@ class AIService {
     const modelMap: Record<string, string> = {
       'claude-sonnet-3.5': 'claude-3-5-sonnet-20241022',
       'gemini-2.0-flash': 'gemini-2.0-flash-exp',
-      'llama': 'meta-llama/llama-3.1-405b-instruct',
+      'deepseek': 'deepseek-chat',
     };
 
     return modelMap[modelId] || modelId;
   }
 
   isConfigured(modelId: string): boolean {
-    if (modelId === 'llama') {
-      return !!this.llamaApiKey;
+    if (modelId === 'deepseek') {
+      return !!this.deepseekApiKey;
     } else if (modelId.startsWith('claude-')) {
       return !!this.anthropicApiKey;
     } else if (modelId.startsWith('gemini-')) {
@@ -238,7 +236,7 @@ class AIService {
 
   getConfigurationStatus(): Record<string, boolean> {
     return {
-      llama: !!this.llamaApiKey,
+      deepseek: !!this.deepseekApiKey,
       anthropic: !!this.anthropicApiKey,
       google: !!this.googleApiKey,
     };
