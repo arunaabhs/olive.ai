@@ -6,7 +6,12 @@ import CopilotSidebar from './CopilotSidebar';
 import Terminal from './Terminal';
 import { useAuth } from '../contexts/AuthContext';
 
-const Dashboard: React.FC = () => {
+interface DashboardProps {
+  projectId?: string;
+  collaborators?: any[];
+}
+
+const Dashboard: React.FC<DashboardProps> = ({ projectId: propProjectId, collaborators = [] }) => {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [sidebarWidth, setSidebarWidth] = useState(256);
   const [copilotOpen, setCopilotOpen] = useState(false);
@@ -22,8 +27,8 @@ const Dashboard: React.FC = () => {
   const editorRef = useRef<any>(null);
   const { user } = useAuth();
 
-  // Generate project ID based on user or use default
-  const projectId = user?.id ? `user-${user.id}` : 'guest-project';
+  // Use provided projectId or generate one based on user
+  const projectId = propProjectId || (user?.id ? `user-${user.id}` : 'guest-project');
 
   const handleGetCurrentCode = () => {
     if (editorRef.current) {
@@ -143,6 +148,7 @@ const Dashboard: React.FC = () => {
             onNewFile={handleNewFile}
             isDarkMode={isDarkMode}
             projectId={projectId}
+            collaborators={collaborators}
           />
         </div>
         
@@ -170,6 +176,7 @@ const Dashboard: React.FC = () => {
           onToggleDarkMode={toggleDarkMode}
           isDarkMode={isDarkMode}
           projectId={projectId}
+          collaborators={collaborators}
         />
         
         <div className="flex-1 flex min-h-0">
@@ -182,6 +189,7 @@ const Dashboard: React.FC = () => {
               onRunCode={handleRunCode}
               isDarkMode={isDarkMode}
               projectId={projectId}
+              collaborators={collaborators}
             />
           </div>
 

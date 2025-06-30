@@ -30,9 +30,17 @@ interface SidebarProps {
   onNewFile: () => void;
   isDarkMode?: boolean;
   projectId?: string;
+  collaborators?: any[];
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle, onNewFile, isDarkMode = false, projectId = 'default-project' }) => {
+const Sidebar: React.FC<SidebarProps> = ({ 
+  collapsed, 
+  onToggle, 
+  onNewFile, 
+  isDarkMode = false, 
+  projectId = 'default-project',
+  collaborators = []
+}) => {
   const [explorerExpanded, setExplorerExpanded] = useState(true);
   const [srcExpanded, setSrcExpanded] = useState(true);
   const [publicExpanded, setPublicExpanded] = useState(false);
@@ -77,7 +85,8 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle, onNewFile, isDar
       expanded: publicExpanded,
       children: [
         { name: 'vite.svg', type: 'file', icon: '🖼️' },
-        { name: 'favicon.ico', type: 'file', icon: '🖼️' }
+        { name: 'favicon.ico', type: 'file', icon: '🖼️' },
+        { name: '_redirects', type: 'file', icon: '🔀' }
       ],
       icon: '📁'
     },
@@ -93,6 +102,7 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle, onNewFile, isDar
             { name: 'App.tsx', type: 'file', icon: '⚛️' },
             { name: 'Dashboard.tsx', type: 'file', icon: '⚛️' },
             { name: 'LandingPage.tsx', type: 'file', icon: '⚛️' },
+            { name: 'ProjectRoom.tsx', type: 'file', icon: '⚛️' },
             { name: 'CodeEditor.tsx', type: 'file', icon: '⚛️' },
             { name: 'Terminal.tsx', type: 'file', icon: '⚛️' },
             { name: 'Sidebar.tsx', type: 'file', icon: '⚛️' },
@@ -319,6 +329,47 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle, onNewFile, isDar
           </div>
         </div>
       </div>
+
+      {/* Collaborators Section */}
+      {collaborators.length > 0 && (
+        <div className={`border-b ${themeClasses.border}`}>
+          <div className={`flex items-center justify-between p-3 ${themeClasses.surfaceHover} cursor-pointer transition-all duration-200`}>
+            <div className="flex items-center">
+              <Users className={`w-3 h-3 ${themeClasses.textSecondary} mr-1.5`} />
+              <span className={`text-xs font-medium ${themeClasses.textSecondary} uppercase tracking-wider`}>
+                Collaborators
+              </span>
+            </div>
+            <span className={`text-xs ${themeClasses.textSecondary} ${themeClasses.surface} px-1.5 py-0.5 rounded-full`}>
+              {collaborators.filter(c => c.isOnline).length}/{collaborators.length}
+            </span>
+          </div>
+          <div className="pb-3">
+            {collaborators.map((collaborator, index) => (
+              <div key={index} className={`flex items-center justify-between px-4 py-1.5 ${themeClasses.surfaceHover} cursor-pointer group transition-all duration-200 rounded mx-1`}>
+                <div className="flex items-center space-x-2">
+                  <div 
+                    className="w-6 h-6 rounded-full flex items-center justify-center text-white text-xs font-medium"
+                    style={{ backgroundColor: collaborator.color }}
+                  >
+                    {collaborator.name.charAt(0).toUpperCase()}
+                  </div>
+                  <div>
+                    <p className={`text-xs ${themeClasses.text} font-light`}>{collaborator.name}</p>
+                    <p className={`text-xs ${themeClasses.textSecondary}`}>{collaborator.email}</p>
+                  </div>
+                </div>
+                <div className="flex items-center space-x-1">
+                  {collaborator.isOwner && (
+                    <span className="text-xs bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded-full">Owner</span>
+                  )}
+                  <div className={`w-2 h-2 rounded-full ${collaborator.isOnline ? 'bg-green-400' : 'bg-gray-300'}`}></div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Open Editors */}
       <div className={`border-b ${themeClasses.border}`}>

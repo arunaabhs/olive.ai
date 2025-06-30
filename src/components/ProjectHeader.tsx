@@ -15,6 +15,7 @@ interface ProjectHeaderProps {
   onToggleDarkMode: () => void;
   isDarkMode: boolean;
   projectId?: string;
+  collaborators?: any[];
 }
 
 const ProjectHeader: React.FC<ProjectHeaderProps> = ({ 
@@ -29,7 +30,8 @@ const ProjectHeader: React.FC<ProjectHeaderProps> = ({
   onRunCode,
   onToggleDarkMode,
   isDarkMode,
-  projectId = 'default-project'
+  projectId = 'default-project',
+  collaborators = []
 }) => {
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
   const { user } = useAuth();
@@ -222,6 +224,30 @@ const ProjectHeader: React.FC<ProjectHeaderProps> = ({
                         </div>
                       </div>
                     </div>
+                    
+                    {/* Active Collaborators */}
+                    {collaborators.length > 0 && (
+                      <div className="px-4 py-2 border-b border-gray-200">
+                        <p className={`text-xs font-medium ${themeClasses.text} mb-2`}>Active Collaborators ({collaborators.filter(c => c.isOnline).length})</p>
+                        <div className="space-y-1">
+                          {collaborators.filter(c => c.isOnline).map((collaborator, index) => (
+                            <div key={index} className="flex items-center space-x-2">
+                              <div 
+                                className="w-4 h-4 rounded-full flex items-center justify-center text-white text-xs font-medium"
+                                style={{ backgroundColor: collaborator.color }}
+                              >
+                                {collaborator.name.charAt(0).toUpperCase()}
+                              </div>
+                              <span className={`text-xs ${themeClasses.text}`}>{collaborator.name}</span>
+                              {collaborator.isOwner && (
+                                <span className="text-xs bg-blue-100 text-blue-700 px-1 py-0.5 rounded">Owner</span>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    
                     <div 
                       className={`px-4 py-2 ${themeClasses.surfaceHover} cursor-pointer flex items-center space-x-3`}
                       onClick={handleShareProject}
@@ -364,6 +390,13 @@ const ProjectHeader: React.FC<ProjectHeaderProps> = ({
           <div className={`px-3 py-1 ${themeClasses.surface} rounded-full text-xs ${themeClasses.textSecondary} flex items-center space-x-2`}>
             <Globe className="w-3 h-3" />
             <span>Project: {projectId.split('-')[0]}...</span>
+            {collaborators.length > 0 && (
+              <>
+                <div className="w-px h-3 bg-gray-300"></div>
+                <Users className="w-3 h-3" />
+                <span>{collaborators.filter(c => c.isOnline).length} online</span>
+              </>
+            )}
           </div>
 
           {/* Dark/Light Mode Toggle */}
