@@ -28,7 +28,7 @@ const CopilotSidebar: React.FC<CopilotSidebarProps> = ({ isOpen, onClose, curren
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null);
-  const [selectedModel, setSelectedModel] = useState('claude-sonnet-3.5');
+  const [selectedModel, setSelectedModel] = useState('deepseek-v3');
   const [showModelDropdown, setShowModelDropdown] = useState(false);
   const [showWelcome, setShowWelcome] = useState(true);
   
@@ -38,39 +38,39 @@ const CopilotSidebar: React.FC<CopilotSidebarProps> = ({ isOpen, onClose, curren
 
   const aiModels: AIModel[] = [
     {
-      id: 'claude-sonnet-3.5',
-      name: 'Claude Sonnet 3.5',
-      provider: 'Anthropic',
+      id: 'deepseek-v3',
+      name: 'DeepSeek V3',
+      provider: 'DeepSeek',
       speed: '1x',
-      description: 'Best for complex reasoning and code analysis'
+      description: 'Advanced reasoning and code generation'
+    },
+    {
+      id: 'deepseek-coder',
+      name: 'DeepSeek Coder',
+      provider: 'DeepSeek',
+      speed: '1x',
+      description: 'Specialized for programming tasks'
+    },
+    {
+      id: 'llama-3.3-70b',
+      name: 'Llama 3.3 70B',
+      provider: 'Meta',
+      speed: '1x',
+      description: 'Large language model for complex tasks'
+    },
+    {
+      id: 'llama-3.2-11b',
+      name: 'Llama 3.2 11B',
+      provider: 'Meta',
+      speed: '2x',
+      description: 'Efficient model for general tasks'
     },
     {
       id: 'gemini-2.0-flash',
       name: 'Gemini 2.0 Flash',
       provider: 'Google',
-      speed: '1x',
+      speed: '3x',
       description: 'Fast and efficient for general tasks'
-    },
-    {
-      id: 'gpt-4.1',
-      name: 'GPT-4.1',
-      provider: 'OpenAI',
-      speed: '1x',
-      description: 'Advanced reasoning and creativity'
-    },
-    {
-      id: 'gpt-4o',
-      name: 'GPT-4o',
-      provider: 'OpenAI',
-      speed: '1x',
-      description: 'Optimized for speed and efficiency'
-    },
-    {
-      id: 'o3-mini',
-      name: 'o3-mini',
-      provider: 'OpenAI',
-      speed: '1x',
-      description: 'Lightweight and fast responses'
     }
   ];
 
@@ -379,7 +379,7 @@ const CopilotSidebar: React.FC<CopilotSidebarProps> = ({ isOpen, onClose, curren
                 onClick={() => setShowModelDropdown(!showModelDropdown)}
                 className={`w-full flex items-center justify-between px-2 py-1.5 text-xs border rounded transition-all duration-200 ${themeClasses.input} ${themeClasses.border} ${themeClasses.surfaceHover}`}
               >
-                <span className={`font-medium ${themeClasses.text}`}>{selectedModelInfo?.name || 'Claude Sonnet 3.5'}</span>
+                <span className={`font-medium ${themeClasses.text}`}>{selectedModelInfo?.name || 'DeepSeek V3'}</span>
                 <ChevronDown className={`w-3 h-3 transition-transform duration-200 ${showModelDropdown ? 'rotate-180' : ''}`} />
               </button>
 
