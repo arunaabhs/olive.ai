@@ -25,7 +25,6 @@ interface AIModel {
   speed: string;
   description: string;
   isLive?: boolean;
-  supportsVision?: boolean;
 }
 
 const CopilotSidebar: React.FC<CopilotSidebarProps> = ({ isOpen, onClose, currentCode, isDarkMode = false }) => {
@@ -49,8 +48,7 @@ const CopilotSidebar: React.FC<CopilotSidebarProps> = ({ isOpen, onClose, curren
       provider: 'Google',
       speed: '3x',
       description: 'Fast and efficient for general tasks',
-      isLive: true,
-      supportsVision: false
+      isLive: true
     },
     {
       id: 'deepseek-r1',
@@ -58,17 +56,15 @@ const CopilotSidebar: React.FC<CopilotSidebarProps> = ({ isOpen, onClose, curren
       provider: 'DeepSeek',
       speed: '2x',
       description: 'Advanced reasoning and code generation',
-      isLive: true,
-      supportsVision: false
+      isLive: true
     },
     {
-      id: 'llama-4-maverick',
-      name: 'Llama 4 Maverick',
+      id: 'llama-3.3',
+      name: 'Llama 3.3',
       provider: 'Meta',
       speed: '1x',
-      description: 'Large language model with vision capabilities',
-      isLive: true,
-      supportsVision: true
+      description: 'Large language model for complex tasks',
+      isLive: false
     }
   ];
 
@@ -168,8 +164,7 @@ const CopilotSidebar: React.FC<CopilotSidebarProps> = ({ isOpen, onClose, curren
             responseContent = await openRouterAPI.generateCodeSuggestions(
               currentCode,
               'javascript', // You might want to detect language from file extension
-              userMessage.content,
-              'deepseek/deepseek-r1-0528:free'
+              userMessage.content
             );
           } else {
             // General query without code context
@@ -180,28 +175,8 @@ const CopilotSidebar: React.FC<CopilotSidebarProps> = ({ isOpen, onClose, curren
           setApiError(error instanceof Error ? error.message : 'Failed to connect to DeepSeek API');
           responseContent = `❌ **DeepSeek API Error**: ${error instanceof Error ? error.message : 'Unknown error occurred'}\n\nPlease check your OpenRouter API key configuration or try again later.`;
         }
-      } else if (selectedModel === 'llama-4-maverick') {
-        // Use real Llama 4 Maverick API via OpenRouter with dedicated API key
-        try {
-          if (currentCode && currentCode.trim()) {
-            // If there's code context, use it
-            responseContent = await openRouterAPI.generateCodeSuggestions(
-              currentCode,
-              'javascript', // You might want to detect language from file extension
-              userMessage.content,
-              'meta-llama/llama-4-maverick:free'
-            );
-          } else {
-            // General query without code context
-            responseContent = await openRouterAPI.generateLlamaResponse(userMessage.content);
-          }
-        } catch (error) {
-          console.error('Llama API Error:', error);
-          setApiError(error instanceof Error ? error.message : 'Failed to connect to Llama API');
-          responseContent = `❌ **Llama API Error**: ${error instanceof Error ? error.message : 'Unknown error occurred'}\n\nPlease check your Llama API key configuration (VITE_LLAMA_API_KEY) or try again later.`;
-        }
       } else {
-        // Fallback for any other models
+        // Mock responses for Llama (not integrated yet)
         await new Promise(resolve => setTimeout(resolve, 1000 + Math.random() * 2000));
         responseContent = generateMockResponse(userMessage.content, currentCode, selectedModel);
       }
@@ -366,14 +341,6 @@ const CopilotSidebar: React.FC<CopilotSidebarProps> = ({ isOpen, onClose, curren
                 : 'Copilot is powered by AI, so mistakes are possible. Review output carefully before use.'
               }
             </p>
-
-            {selectedModelInfo?.supportsVision && (
-              <div className="mt-2 p-2 bg-blue-50 rounded-lg border border-blue-200">
-                <p className="text-xs text-blue-700">
-                  🔍 This model supports image analysis! You can ask questions about images.
-                </p>
-              </div>
-            )}
           </div>
         )}
 
@@ -401,11 +368,6 @@ const CopilotSidebar: React.FC<CopilotSidebarProps> = ({ isOpen, onClose, curren
                         {message.model && aiModels.find(m => m.id === message.model)?.isLive && !apiError && (
                           <span className="text-xs bg-green-100 text-green-700 px-1.5 py-0.5 rounded-full">
                             Live
-                          </span>
-                        )}
-                        {message.model && aiModels.find(m => m.id === message.model)?.supportsVision && (
-                          <span className="text-xs bg-purple-100 text-purple-700 px-1.5 py-0.5 rounded-full">
-                            Vision
                           </span>
                         )}
                       </div>
@@ -503,11 +465,6 @@ const CopilotSidebar: React.FC<CopilotSidebarProps> = ({ isOpen, onClose, curren
                       Live
                     </span>
                   )}
-                  {selectedModelInfo?.supportsVision && (
-                    <span className="text-xs bg-purple-100 text-purple-700 px-1.5 py-0.5 rounded-full">
-                      Vision
-                    </span>
-                  )}
                 </div>
                 <ChevronDown className={`w-3 h-3 transition-transform duration-200 ${showModelDropdown ? 'rotate-180' : ''}`} />
               </button>
@@ -537,12 +494,7 @@ const CopilotSidebar: React.FC<CopilotSidebarProps> = ({ isOpen, onClose, curren
                               <Check className="w-2.5 h-2.5" />
                             )}
                             <div className="text-left">
-                              <div className="font-medium flex items-center space-x-1">
-                                <span>{model.name}</span>
-                                {model.supportsVision && (
-                                  <span className="text-xs">🔍</span>
-                                )}
-                              </div>
+                              <div className="font-medium">{model.name}</div>
                               <div className={`text-xs ${selectedModel === model.id ? 'text-blue-100' : themeClasses.textSecondary}`}>
                                 {model.description}
                               </div>
