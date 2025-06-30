@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Send, Loader2, X, Brain, Copy, Check, ChevronDown, Paperclip, Mic } from 'lucide-react';
+import { geminiAPI } from '../lib/gemini';
 
 interface CopilotSidebarProps {
   isOpen: boolean;
@@ -13,6 +14,7 @@ interface Message {
   type: 'user' | 'assistant';
   content: string;
   timestamp: Date;
+  model?: string;
 }
 
 interface AIModel {
@@ -31,6 +33,7 @@ const CopilotSidebar: React.FC<CopilotSidebarProps> = ({ isOpen, onClose, curren
   const [selectedModel, setSelectedModel] = useState('gemini-2.0-flash');
   const [showModelDropdown, setShowModelDropdown] = useState(false);
   const [showWelcome, setShowWelcome] = useState(true);
+  const [apiError, setApiError] = useState<string | null>(null);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLInputElement>(null);
@@ -124,21 +127,55 @@ const CopilotSidebar: React.FC<CopilotSidebarProps> = ({ isOpen, onClose, curren
     setQuery('');
     setIsLoading(true);
     setShowWelcome(false);
+    setApiError(null);
 
     try {
-      // Simulate AI response
-      await new Promise(resolve => setTimeout(resolve, 1000 + Math.random() * 2000));
+      let responseContent = '';
+
+      if (selectedModel === 'gemini-2.0-flash') {
+        // Use real Gemini API
+        try {
+          if (currentCode && currentCode.trim()) {
+            // If there's code context, use it
+            responseContent = await geminiAPI.generateCodeSuggestions(
+              currentCode,
+              'javascript', // You might want to detect language from file extension
+              userMessage.content
+            );
+          } else {
+            // General query without code context
+            responseContent = await geminiAPI.generateResponse(userMessage.content);
+          }
+        } catch (error) {
+          console.error('Gemini API Error:', error);
+          setApiError(error instanceof Error ? error.message : 'Failed to connect to Gemini API');
+          responseContent = `❌ **Gemini API Error**: ${error instanceof Error ? error.message : 'Unknown error occurred'}\n\nPlease check your API key configuration or try again later.`;
+        }
+      } else {
+        // Mock responses for other models (DeepSeek and Llama)
+        await new Promise(resolve => setTimeout(resolve, 1000 + Math.random() * 2000));
+        responseContent = generateMockResponse(userMessage.content, currentCode, selectedModel);
+      }
       
       const assistantMessage: Message = {
         id: (Date.now() + 1).toString(),
         type: 'assistant',
-        content: generateMockResponse(userMessage.content, currentCode, selectedModel),
-        timestamp: new Date()
+        content: responseContent,
+        timestamp: new Date(),
+        model: selectedModel
       };
 
       setMessages(prev => [...prev, assistantMessage]);
     } catch (err) {
       console.error('AI request failed:', err);
+      const errorMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        type: 'assistant',
+        content: `❌ **Error**: Failed to get response from ${selectedModel}. Please try again.`,
+        timestamp: new Date(),
+        model: selectedModel
+      };
+      setMessages(prev => [...prev, errorMessage]);
     } finally {
       setIsLoading(false);
     }
@@ -151,18 +188,18 @@ const CopilotSidebar: React.FC<CopilotSidebarProps> = ({ isOpen, onClose, curren
     const query = userQuery.toLowerCase();
     
     if (query.includes('explain') || query.includes('what does')) {
-      return `I'm ${modelName}, and I can help explain this code. Based on the current context, I can see you're working with a React application. The code structure follows modern React patterns with TypeScript integration.\n\nWould you like me to explain any specific part in more detail?`;
+      return `I'm **${modelName}**, and I can help explain this code. Based on the current context, I can see you're working with a React application. The code structure follows modern React patterns with TypeScript integration.\n\n*Note: This is a simulated response. Real ${modelName} integration coming soon!*\n\nWould you like me to explain any specific part in more detail?`;
     }
     
     if (query.includes('optimize') || query.includes('improve')) {
-      return `As ${modelName}, here are my optimization suggestions:\n\n1. **Performance**: Consider using React.memo() for components that don't need frequent re-renders\n2. **Code Structure**: Extract custom hooks for reusable logic\n3. **TypeScript**: Add more specific type definitions\n\nWould you like me to elaborate on any of these suggestions?`;
+      return `As **${modelName}**, here are my optimization suggestions:\n\n**Performance**: Consider using React.memo() for components that don't need frequent re-renders\n\n**Code Structure**: Extract custom hooks for reusable logic\n\n**TypeScript**: Add more specific type definitions\n\n*Note: This is a simulated response. Real ${modelName} integration coming soon!*\n\nWould you like me to elaborate on any of these suggestions?`;
     }
     
     if (query.includes('bug') || query.includes('error') || query.includes('fix')) {
-      return `I'm ${modelName} and I can help debug this issue. Common problems I notice:\n\n• **State Management**: Ensure state updates are properly handled\n• **Dependencies**: Check if all dependencies are correctly listed\n• **Type Safety**: Verify TypeScript types match expected values\n\nCan you share the specific error message you're seeing?`;
+      return `I'm **${modelName}** and I can help debug this issue. Common problems I notice:\n\n• **State Management**: Ensure state updates are properly handled\n• **Dependencies**: Check if all dependencies are correctly listed\n• **Type Safety**: Verify TypeScript types match expected values\n\n*Note: This is a simulated response. Real ${modelName} integration coming soon!*\n\nCan you share the specific error message you're seeing?`;
     }
     
-    return `Hello! I'm ${modelName}. I understand you're asking about "${userQuery}". I'm here to help with:\n\n• **Code Explanation**: Breaking down complex logic\n• **Debugging**: Finding and fixing issues\n• **Optimization**: Improving performance and structure\n• **Best Practices**: Following modern development standards\n\nCould you provide more specific details about what you'd like assistance with?`;
+    return `Hello! I'm **${modelName}**. I understand you're asking about "${userQuery}". I'm here to help with:\n\n• **Code Explanation**: Breaking down complex logic\n• **Debugging**: Finding and fixing issues\n• **Optimization**: Improving performance and structure\n• **Best Practices**: Following modern development standards\n\n*Note: This is a simulated response. Real ${modelName} integration coming soon!*\n\nCould you provide more specific details about what you'd like assistance with?`;
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -195,6 +232,14 @@ const CopilotSidebar: React.FC<CopilotSidebarProps> = ({ isOpen, onClose, curren
           </li>
         );
       }
+      if (line.startsWith('**') && line.includes('**:')) {
+        const parts = line.split('**');
+        return (
+          <p key={index} className="font-semibold mb-2">
+            <strong>{parts[1]}</strong>: {parts[2]}
+          </p>
+        );
+      }
       if (line.startsWith('**') && line.endsWith('**')) {
         return (
           <p key={index} className="font-semibold mb-2">
@@ -224,11 +269,15 @@ const CopilotSidebar: React.FC<CopilotSidebarProps> = ({ isOpen, onClose, curren
             <div className="w-6 h-6 bg-gradient-to-br from-blue-500 via-blue-600 to-indigo-600 rounded-lg flex items-center justify-center shadow-lg">
               <Brain className="w-3 h-3 text-white" />
             </div>
-            <div className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+            <div className={`absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full animate-pulse ${
+              selectedModel === 'gemini-2.0-flash' && !apiError ? 'bg-green-400' : 'bg-yellow-400'
+            }`}></div>
           </div>
           <div>
             <h3 className={`font-semibold ${themeClasses.text} text-xs`}>Ask Copilot</h3>
-            <p className={`text-xs ${themeClasses.textSecondary}`}>AI-powered assistant</p>
+            <p className={`text-xs ${themeClasses.textSecondary}`}>
+              {selectedModel === 'gemini-2.0-flash' && !apiError ? 'AI-powered assistant' : 'Simulated responses'}
+            </p>
           </div>
         </div>
         
@@ -240,6 +289,15 @@ const CopilotSidebar: React.FC<CopilotSidebarProps> = ({ isOpen, onClose, curren
           <X className={`w-3 h-3 ${themeClasses.textSecondary}`} />
         </button>
       </div>
+
+      {/* API Error Banner */}
+      {apiError && (
+        <div className="px-3 py-2 bg-red-50 border-b border-red-200">
+          <p className="text-xs text-red-700">
+            ⚠️ Gemini API Error: {apiError}
+          </p>
+        </div>
+      )}
 
       {/* Content Area */}
       <div className="flex-1 flex flex-col min-h-0">
@@ -253,7 +311,10 @@ const CopilotSidebar: React.FC<CopilotSidebarProps> = ({ isOpen, onClose, curren
             <h2 className={`text-lg font-semibold ${themeClasses.text} mb-2`}>Ask Copilot</h2>
             
             <p className={`text-xs ${themeClasses.textSecondary} mb-4 leading-relaxed max-w-xs`}>
-              Copilot is powered by AI, so mistakes are possible. Review output carefully before use.
+              {selectedModel === 'gemini-2.0-flash' 
+                ? 'Powered by Google Gemini 2.0 Flash. Real AI responses enabled!'
+                : 'Copilot is powered by AI, so mistakes are possible. Review output carefully before use.'
+              }
             </p>
           </div>
         )}
@@ -275,9 +336,16 @@ const CopilotSidebar: React.FC<CopilotSidebarProps> = ({ isOpen, onClose, curren
                 >
                   {message.type === 'assistant' && (
                     <div className="flex items-center justify-between mb-1">
-                      <span className={`text-xs font-medium ${themeClasses.textSecondary}`}>
-                        {selectedModelInfo?.name || 'AI Assistant'}
-                      </span>
+                      <div className="flex items-center space-x-2">
+                        <span className={`text-xs font-medium ${themeClasses.textSecondary}`}>
+                          {selectedModelInfo?.name || 'AI Assistant'}
+                        </span>
+                        {message.model === 'gemini-2.0-flash' && !apiError && (
+                          <span className="text-xs bg-green-100 text-green-700 px-1.5 py-0.5 rounded-full">
+                            Live
+                          </span>
+                        )}
+                      </div>
                       <button
                         onClick={() => copyToClipboard(message.content, message.id)}
                         className={`p-0.5 ${themeClasses.surfaceHover} rounded transition-colors`}
@@ -365,7 +433,14 @@ const CopilotSidebar: React.FC<CopilotSidebarProps> = ({ isOpen, onClose, curren
                 onClick={() => setShowModelDropdown(!showModelDropdown)}
                 className={`w-full flex items-center justify-between px-2 py-1.5 text-xs border rounded transition-all duration-200 ${themeClasses.input} ${themeClasses.border} ${themeClasses.surfaceHover}`}
               >
-                <span className={`font-medium ${themeClasses.text}`}>{selectedModelInfo?.name || 'Gemini 2.0 Flash'}</span>
+                <div className="flex items-center space-x-2">
+                  <span className={`font-medium ${themeClasses.text}`}>{selectedModelInfo?.name || 'Gemini 2.0 Flash'}</span>
+                  {selectedModel === 'gemini-2.0-flash' && !apiError && (
+                    <span className="text-xs bg-green-100 text-green-700 px-1.5 py-0.5 rounded-full">
+                      Live
+                    </span>
+                  )}
+                </div>
                 <ChevronDown className={`w-3 h-3 transition-transform duration-200 ${showModelDropdown ? 'rotate-180' : ''}`} />
               </button>
 
@@ -381,6 +456,7 @@ const CopilotSidebar: React.FC<CopilotSidebarProps> = ({ isOpen, onClose, curren
                           onClick={() => {
                             setSelectedModel(model.id);
                             setShowModelDropdown(false);
+                            setApiError(null); // Clear any previous errors
                           }}
                           className={`w-full flex items-center justify-between px-2 py-1.5 text-xs rounded transition-all duration-200 ${
                             selectedModel === model.id
@@ -392,11 +468,21 @@ const CopilotSidebar: React.FC<CopilotSidebarProps> = ({ isOpen, onClose, curren
                             {selectedModel === model.id && (
                               <Check className="w-2.5 h-2.5" />
                             )}
-                            <span className="font-medium">{model.name}</span>
+                            <div className="text-left">
+                              <div className="font-medium">{model.name}</div>
+                              <div className={`text-xs ${selectedModel === model.id ? 'text-blue-100' : themeClasses.textSecondary}`}>
+                                {model.description}
+                              </div>
+                            </div>
                           </div>
-                          <span className={`text-xs ${selectedModel === model.id ? 'text-blue-100' : themeClasses.textSecondary}`}>
-                            {model.speed}
-                          </span>
+                          <div className="flex flex-col items-end">
+                            <span className={`text-xs ${selectedModel === model.id ? 'text-blue-100' : themeClasses.textSecondary}`}>
+                              {model.speed}
+                            </span>
+                            {model.id === 'gemini-2.0-flash' && (
+                              <span className="text-xs text-green-500">Live</span>
+                            )}
+                          </div>
                         </button>
                       ))}
                     </div>
