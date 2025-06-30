@@ -20,29 +20,35 @@ interface AIRequest {
 }
 
 class AIService {
-  private deepseekApiKey: string;
+  private openrouterApiKey: string;
   private anthropicApiKey: string;
   private googleApiKey: string;
+  private siteUrl: string;
+  private siteName: string;
 
   constructor() {
-    this.deepseekApiKey = import.meta.env.VITE_DEEPSEEK_API_KEY || '';
+    this.openrouterApiKey = import.meta.env.VITE_OPENROUTER_API_KEY || '';
     this.anthropicApiKey = import.meta.env.VITE_ANTHROPIC_API_KEY || '';
     this.googleApiKey = import.meta.env.VITE_GOOGLE_API_KEY || '';
+    this.siteUrl = import.meta.env.VITE_SITE_URL || 'http://localhost:5173';
+    this.siteName = import.meta.env.VITE_SITE_NAME || 'Olive Code Editor';
   }
 
   async callDeepSeek(request: AIRequest): Promise<AIResponse> {
-    if (!this.deepseekApiKey) {
-      throw new Error('DeepSeek API key not configured');
+    if (!this.openrouterApiKey) {
+      throw new Error('OpenRouter API key not configured for DeepSeek');
     }
 
-    const response = await fetch('https://api.deepseek.com/v1/chat/completions', {
+    const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${this.deepseekApiKey}`,
+        'Authorization': `Bearer ${this.openrouterApiKey}`,
+        'HTTP-Referer': this.siteUrl,
+        'X-Title': this.siteName,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: request.model,
+        model: 'deepseek/deepseek-r1-0528',
         messages: request.messages,
         temperature: request.temperature || 0.7,
         max_tokens: request.max_tokens || 1000,
@@ -217,7 +223,7 @@ class AIService {
     const modelMap: Record<string, string> = {
       'claude-sonnet-3.5': 'claude-3-5-sonnet-20241022',
       'gemini-2.0-flash': 'gemini-2.0-flash-exp',
-      'deepseek': 'deepseek-chat',
+      'deepseek': 'deepseek/deepseek-r1-0528',
     };
 
     return modelMap[modelId] || modelId;
@@ -225,7 +231,7 @@ class AIService {
 
   isConfigured(modelId: string): boolean {
     if (modelId === 'deepseek') {
-      return !!this.deepseekApiKey;
+      return !!this.openrouterApiKey;
     } else if (modelId.startsWith('claude-')) {
       return !!this.anthropicApiKey;
     } else if (modelId.startsWith('gemini-')) {
@@ -236,7 +242,7 @@ class AIService {
 
   getConfigurationStatus(): Record<string, boolean> {
     return {
-      deepseek: !!this.deepseekApiKey,
+      deepseek: !!this.openrouterApiKey,
       anthropic: !!this.anthropicApiKey,
       google: !!this.googleApiKey,
     };
