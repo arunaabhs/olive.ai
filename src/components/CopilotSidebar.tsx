@@ -118,6 +118,14 @@ const CopilotSidebar: React.FC<CopilotSidebarProps> = ({ isOpen, onClose, curren
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  const detectLanguage = (code: string): string => {
+    if (code.includes('import React') || code.includes('useState') || code.includes('useEffect')) return 'javascript';
+    if (code.includes('def ') || code.includes('import ') || code.includes('print(')) return 'python';
+    if (code.includes('<html>') || code.includes('<!DOCTYPE')) return 'html';
+    if (code.includes('function') || code.includes('const ') || code.includes('let ')) return 'javascript';
+    return 'javascript'; // default
+  };
+
   const handleSendMessage = async () => {
     if (!query.trim()) return;
 
@@ -136,6 +144,7 @@ const CopilotSidebar: React.FC<CopilotSidebarProps> = ({ isOpen, onClose, curren
 
     try {
       let responseContent = '';
+      const language = detectLanguage(currentCode);
 
       if (selectedModel === 'gemini-2.0-flash') {
         // Use real Gemini API
@@ -144,7 +153,7 @@ const CopilotSidebar: React.FC<CopilotSidebarProps> = ({ isOpen, onClose, curren
             // If there's code context, use it
             responseContent = await geminiAPI.generateCodeSuggestions(
               currentCode,
-              'javascript', // You might want to detect language from file extension
+              language,
               userMessage.content
             );
           } else {
@@ -163,7 +172,7 @@ const CopilotSidebar: React.FC<CopilotSidebarProps> = ({ isOpen, onClose, curren
             // If there's code context, use it
             responseContent = await openRouterAPI.generateCodeSuggestions(
               currentCode,
-              'javascript', // You might want to detect language from file extension
+              language,
               userMessage.content
             );
           } else {
@@ -176,13 +185,13 @@ const CopilotSidebar: React.FC<CopilotSidebarProps> = ({ isOpen, onClose, curren
           responseContent = `❌ **DeepSeek API Error**: ${error instanceof Error ? error.message : 'Unknown error occurred'}\n\nPlease check your OpenRouter API key configuration or try again later.`;
         }
       } else if (selectedModel === 'mistral-7b') {
-        // Use real Mistral 7B API via OpenRouter
+        // Use real Mistral 7B API via OpenRouter with dedicated API key
         try {
           if (currentCode && currentCode.trim()) {
             // If there's code context, use it
             responseContent = await openRouterAPI.generateMistralCodeSuggestions(
               currentCode,
-              'javascript', // You might want to detect language from file extension
+              language,
               userMessage.content
             );
           } else {
@@ -192,7 +201,7 @@ const CopilotSidebar: React.FC<CopilotSidebarProps> = ({ isOpen, onClose, curren
         } catch (error) {
           console.error('Mistral API Error:', error);
           setApiError(error instanceof Error ? error.message : 'Failed to connect to Mistral API');
-          responseContent = `❌ **Mistral API Error**: ${error instanceof Error ? error.message : 'Unknown error occurred'}\n\nPlease check your OpenRouter API key configuration or try again later.`;
+          responseContent = `❌ **Mistral API Error**: ${error instanceof Error ? error.message : 'Unknown error occurred'}\n\nPlease check your Mistral API key configuration or try again later.`;
         }
       } else {
         // Fallback for any other models
