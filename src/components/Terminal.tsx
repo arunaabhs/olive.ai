@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Terminal as TerminalIcon, X, Minimize2, Maximize2, Play, Square, Zap, Code, FileText, Plus, MoreHorizontal, Move } from 'lucide-react';
+import { Terminal as TerminalIcon, X, Minimize2, Maximize2, Play, Square, Zap, Code, FileText, Plus, MoreHorizontal, Move, GripHorizontal } from 'lucide-react';
 
 interface TerminalInstance {
   id: string;
@@ -8,6 +8,8 @@ interface TerminalInstance {
   currentCommand: string;
   currentDirectory: string;
   isActive: boolean;
+  history: TerminalLine[][];
+  historyIndex: number;
 }
 
 interface TerminalProps {
@@ -62,7 +64,9 @@ const Terminal: React.FC<TerminalProps> = ({ isOpen, onClose, onToggleSize, isMi
       ],
       currentCommand: '',
       currentDirectory: '~/olive-project',
-      isActive: true
+      isActive: true,
+      history: [],
+      historyIndex: -1
     }
   ]);
   
@@ -77,6 +81,7 @@ const Terminal: React.FC<TerminalProps> = ({ isOpen, onClose, onToggleSize, isMi
   const [isDragging, setIsDragging] = useState(false);
   const [isResizing, setIsResizing] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+  const [resizeStart, setResizeStart] = useState({ x: 0, y: 0, width: 0, height: 0 });
   const [environmentVars, setEnvironmentVars] = useState<Record<string, string>>({
     NODE_ENV: 'development',
     PATH: '/usr/local/bin:/usr/bin:/bin',
@@ -126,9 +131,11 @@ const Terminal: React.FC<TerminalProps> = ({ isOpen, onClose, onToggleSize, isMi
     }
   }, [isOpen, isMinimized, activeTerminalId]);
 
-  // Dragging functionality
+  // Enhanced dragging functionality
   const handleMouseDown = (e: React.MouseEvent) => {
-    if (e.target === e.currentTarget || (e.target as HTMLElement).classList.contains('drag-handle')) {
+    const target = e.target as HTMLElement;
+    if (target.classList.contains('drag-handle') || target.closest('.drag-handle')) {
+      e.preventDefault();
       setIsDragging(true);
       setDragStart({
         x: e.clientX - position.x,
@@ -142,6 +149,10 @@ const Terminal: React.FC<TerminalProps> = ({ isOpen, onClose, onToggleSize, isMi
       const newX = Math.max(0, Math.min(window.innerWidth - size.width, e.clientX - dragStart.x));
       const newY = Math.max(0, Math.min(window.innerHeight - size.height, e.clientY - dragStart.y));
       setPosition({ x: newX, y: newY });
+    } else if (isResizing) {
+      const newWidth = Math.max(400, Math.min(window.innerWidth - position.x, resizeStart.width + (e.clientX - resizeStart.x)));
+      const newHeight = Math.max(300, Math.min(window.innerHeight - position.y, resizeStart.height + (e.clientY - resizeStart.y)));
+      setSize({ width: newWidth, height: newHeight });
     }
   };
 
@@ -150,19 +161,158 @@ const Terminal: React.FC<TerminalProps> = ({ isOpen, onClose, onToggleSize, isMi
     setIsResizing(false);
   };
 
+  const handleResizeStart = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsResizing(true);
+    setResizeStart({
+      x: e.clientX,
+      y: e.clientY,
+      width: size.width,
+      height: size.height
+    });
+  };
+
   useEffect(() => {
     if (isDragging || isResizing) {
       document.addEventListener('mousemove', handleMouseMove);
       document.addEventListener('mouseup', handleMouseUp);
       document.body.style.userSelect = 'none';
+      document.body.style.cursor = isDragging ? 'move' : 'se-resize';
 
       return () => {
         document.removeEventListener('mousemove', handleMouseMove);
         document.removeEventListener('mouseup', handleMouseUp);
         document.body.style.userSelect = '';
+        document.body.style.cursor = '';
       };
     }
-  }, [isDragging, isResizing, dragStart]);
+  }, [isDragging, isResizing, dragStart, resizeStart]);
+
+  // Save state to history before making changes
+  const saveToHistory = () => {
+    setTerminals(prev => prev.map(terminal => 
+      terminal.id === activeTerminalId 
+        ? { 
+            ...terminal, 
+            history: [...terminal.history.slice(0, terminal.historyIndex + 1), [...terminal.lines]],
+            historyIndex: terminal.historyIndex + 1
+          }
+        : terminal
+    ));
+  };
+
+  // Undo functionality
+  const handleUndo = () => {
+    const terminal = activeTerminal;
+    if (terminal.historyIndex > 0) {
+      setTerminals(prev => prev.map(t => 
+        t.id === activeTerminalId 
+          ? { 
+              ...t, 
+              lines: terminal.history[terminal.historyIndex - 1] || [],
+              historyIndex: terminal.historyIndex - 1
+            }
+          : t
+      ));
+    }
+  };
+
+  // Redo functionality
+  const handleRedo = () => {
+    const terminal = activeTerminal;
+    if (terminal.historyIndex < terminal.history.length - 1) {
+      setTerminals(prev => prev.map(t => 
+        t.id === activeTerminalId 
+          ? { 
+              ...t, 
+              lines: terminal.history[terminal.historyIndex + 1] || [],
+              historyIndex: terminal.historyIndex + 1
+            }
+          : t
+      ));
+    }
+  };
+
+  // Cut functionality
+  const handleCut = () => {
+    const selectedText = window.getSelection()?.toString();
+    if (selectedText) {
+      navigator.clipboard.writeText(selectedText);
+      // Remove selected text (simplified implementation)
+      window.getSelection()?.deleteFromDocument();
+    }
+  };
+
+  // Copy functionality
+  const handleCopy = () => {
+    const selectedText = window.getSelection()?.toString();
+    if (selectedText) {
+      navigator.clipboard.writeText(selectedText);
+    } else {
+      // Copy all terminal content if nothing is selected
+      const allContent = activeTerminal.lines.map(line => line.content).join('\n');
+      navigator.clipboard.writeText(allContent);
+    }
+  };
+
+  // Paste functionality
+  const handlePaste = async () => {
+    try {
+      const text = await navigator.clipboard.readText();
+      if (inputRef.current) {
+        const currentValue = inputRef.current.value;
+        const cursorPosition = inputRef.current.selectionStart || 0;
+        const newValue = currentValue.slice(0, cursorPosition) + text + currentValue.slice(cursorPosition);
+        updateCurrentCommand(newValue);
+        
+        // Set cursor position after paste
+        setTimeout(() => {
+          if (inputRef.current) {
+            inputRef.current.setSelectionRange(cursorPosition + text.length, cursorPosition + text.length);
+          }
+        }, 0);
+      }
+    } catch (err) {
+      console.error('Failed to paste:', err);
+    }
+  };
+
+  // Select all functionality
+  const handleSelectAll = () => {
+    if (terminalRef.current) {
+      const range = document.createRange();
+      range.selectNodeContents(terminalRef.current);
+      const selection = window.getSelection();
+      selection?.removeAllRanges();
+      selection?.addRange(range);
+    }
+  };
+
+  // Find functionality
+  const handleFind = () => {
+    const searchTerm = prompt('Search in terminal:');
+    if (searchTerm && terminalRef.current) {
+      const content = terminalRef.current.textContent || '';
+      const index = content.toLowerCase().indexOf(searchTerm.toLowerCase());
+      if (index !== -1) {
+        // Highlight found text (simplified implementation)
+        addLine(`🔍 Found "${searchTerm}" in terminal output`, 'info');
+      } else {
+        addLine(`🔍 "${searchTerm}" not found in terminal output`, 'warning');
+      }
+    }
+  };
+
+  // Clear terminal
+  const handleClear = () => {
+    saveToHistory();
+    setTerminals(prev => prev.map(terminal => 
+      terminal.id === activeTerminalId 
+        ? { ...terminal, lines: [] }
+        : terminal
+    ));
+  };
 
   const addLine = (content: string, type: 'command' | 'output' | 'error' | 'success' | 'info' | 'warning' = 'output') => {
     const newLine: TerminalLine = {
@@ -208,7 +358,9 @@ const Terminal: React.FC<TerminalProps> = ({ isOpen, onClose, onToggleSize, isMi
       ],
       currentCommand: '',
       currentDirectory: '~/olive-project',
-      isActive: false
+      isActive: false,
+      history: [],
+      historyIndex: -1
     };
 
     setTerminals(prev => [...prev, newTerminal]);
@@ -228,6 +380,7 @@ const Terminal: React.FC<TerminalProps> = ({ isOpen, onClose, onToggleSize, isMi
 
   // Real code execution function
   const executeRealCode = async (code: string, language: string) => {
+    saveToHistory(); // Save state before execution
     addLine(`🚀 Executing ${language} code...`, 'info');
     addLine('', 'output');
     
@@ -372,6 +525,7 @@ const Terminal: React.FC<TerminalProps> = ({ isOpen, onClose, onToggleSize, isMi
   const executeCommand = async (command: string) => {
     if (!command.trim()) return;
 
+    saveToHistory(); // Save state before command execution
     setCommandHistory(prev => [...prev, command]);
     setHistoryIndex(-1);
 
@@ -415,11 +569,7 @@ const Terminal: React.FC<TerminalProps> = ({ isOpen, onClose, onToggleSize, isMi
         addLine('  clear          - Clear terminal', 'output');
         addLine('  exit           - Exit terminal', 'output');
       } else if (cmd === 'clear') {
-        setTerminals(prev => prev.map(terminal => 
-          terminal.id === activeTerminalId 
-            ? { ...terminal, lines: [] }
-            : terminal
-        ));
+        handleClear();
       } else if (cmd === 'ls' || cmd === 'dir') {
         addLine('📁 Project Structure:', 'info');
         addLine('  📂 src/', 'output');
@@ -506,6 +656,45 @@ const Terminal: React.FC<TerminalProps> = ({ isOpen, onClose, onToggleSize, isMi
           updateCurrentCommand(commandHistory[newIndex]);
         }
       }
+    } else if (e.ctrlKey || e.metaKey) {
+      switch (e.key) {
+        case 'z':
+          e.preventDefault();
+          if (e.shiftKey) {
+            handleRedo();
+          } else {
+            handleUndo();
+          }
+          break;
+        case 'y':
+          e.preventDefault();
+          handleRedo();
+          break;
+        case 'x':
+          e.preventDefault();
+          handleCut();
+          break;
+        case 'c':
+          e.preventDefault();
+          handleCopy();
+          break;
+        case 'v':
+          e.preventDefault();
+          handlePaste();
+          break;
+        case 'a':
+          e.preventDefault();
+          handleSelectAll();
+          break;
+        case 'f':
+          e.preventDefault();
+          handleFind();
+          break;
+        case 'l':
+          e.preventDefault();
+          handleClear();
+          break;
+      }
     }
   };
 
@@ -545,7 +734,7 @@ const Terminal: React.FC<TerminalProps> = ({ isOpen, onClose, onToggleSize, isMi
   return (
     <div
       ref={windowRef}
-      className={`fixed z-50 rounded-lg shadow-2xl border ${themeClasses.bg} ${themeClasses.border}`}
+      className={`fixed z-50 rounded-lg shadow-2xl border ${themeClasses.bg} ${themeClasses.border} select-none`}
       style={{
         left: position.x,
         top: position.y,
@@ -557,19 +746,27 @@ const Terminal: React.FC<TerminalProps> = ({ isOpen, onClose, onToggleSize, isMi
         maxHeight: '90vh'
       }}
     >
-      {/* Terminal Header with Tabs */}
+      {/* Terminal Header with Enhanced Drag Handle */}
       <div
-        className={`flex items-center justify-between ${themeClasses.headerBg} ${themeClasses.border} border-b rounded-t-lg cursor-move drag-handle`}
-        onMouseDown={handleMouseDown}
+        className={`flex items-center justify-between ${themeClasses.headerBg} ${themeClasses.border} border-b rounded-t-lg`}
       >
-        {/* Window Controls */}
+        {/* Window Controls and Drag Handle */}
         <div className="flex items-center space-x-2 px-3 py-2">
           <div className="flex space-x-1.5">
-            <div className="w-3 h-3 bg-red-500 rounded-full cursor-pointer hover:bg-red-600" onClick={onClose}></div>
-            <div className="w-3 h-3 bg-yellow-500 rounded-full cursor-pointer hover:bg-yellow-600" onClick={onToggleSize}></div>
-            <div className="w-3 h-3 bg-green-500 rounded-full cursor-pointer hover:bg-green-600"></div>
+            <div className="w-3 h-3 bg-red-500 rounded-full cursor-pointer hover:bg-red-600 transition-colors" onClick={onClose}></div>
+            <div className="w-3 h-3 bg-yellow-500 rounded-full cursor-pointer hover:bg-yellow-600 transition-colors" onClick={onToggleSize}></div>
+            <div className="w-3 h-3 bg-green-500 rounded-full cursor-pointer hover:bg-green-600 transition-colors"></div>
           </div>
-          <Move className={`w-4 h-4 ${themeClasses.textSecondary} ml-2`} />
+          
+          {/* Enhanced Drag Handle */}
+          <div 
+            className="drag-handle flex items-center space-x-1 px-2 py-1 rounded cursor-move hover:bg-gray-600/20 transition-colors"
+            onMouseDown={handleMouseDown}
+            title="Drag to move terminal"
+          >
+            <GripHorizontal className={`w-4 h-4 ${themeClasses.textSecondary}`} />
+            <span className={`text-xs ${themeClasses.textSecondary} font-medium`}>Terminal</span>
+          </div>
         </div>
 
         {/* Tabs */}
@@ -631,6 +828,33 @@ const Terminal: React.FC<TerminalProps> = ({ isOpen, onClose, onToggleSize, isMi
                 ))}
               </div>
 
+              {/* Action Buttons */}
+              <button
+                onClick={handleUndo}
+                disabled={activeTerminal.historyIndex <= 0}
+                className={`p-1 rounded transition-all duration-200 ${
+                  activeTerminal.historyIndex <= 0 
+                    ? 'opacity-50 cursor-not-allowed' 
+                    : `${themeClasses.surfaceHover} cursor-pointer`
+                }`}
+                title="Undo (Ctrl+Z)"
+              >
+                <span className={`text-xs ${themeClasses.textSecondary}`}>↶</span>
+              </button>
+              
+              <button
+                onClick={handleRedo}
+                disabled={activeTerminal.historyIndex >= activeTerminal.history.length - 1}
+                className={`p-1 rounded transition-all duration-200 ${
+                  activeTerminal.historyIndex >= activeTerminal.history.length - 1
+                    ? 'opacity-50 cursor-not-allowed' 
+                    : `${themeClasses.surfaceHover} cursor-pointer`
+                }`}
+                title="Redo (Ctrl+Y)"
+              >
+                <span className={`text-xs ${themeClasses.textSecondary}`}>↷</span>
+              </button>
+
               <select className={`text-xs px-2 py-1 rounded ${themeClasses.surface} ${themeClasses.border} ${themeClasses.text}`}>
                 <option>bash</option>
                 <option>zsh</option>
@@ -681,7 +905,7 @@ const Terminal: React.FC<TerminalProps> = ({ isOpen, onClose, onToggleSize, isMi
         <div className="flex-1 flex flex-col">
           <div
             ref={terminalRef}
-            className={`flex-1 overflow-y-auto p-4 font-mono text-sm ${themeClasses.bg}`}
+            className={`flex-1 overflow-y-auto p-4 font-mono text-sm ${themeClasses.bg} select-text`}
             style={{ 
               backgroundColor: isDarkMode ? '#1a1a1a' : '#ffffff',
               height: size.height - 100
@@ -727,10 +951,14 @@ const Terminal: React.FC<TerminalProps> = ({ isOpen, onClose, onToggleSize, isMi
                     ● {runningProcesses.length} active
                   </span>
                 )}
+                <span className="font-light">
+                  History: {activeTerminal.historyIndex + 1}/{activeTerminal.history.length}
+                </span>
               </div>
               <div className="flex items-center space-x-4">
-                <span className={themeClasses.textSecondary}>Ctrl+C to interrupt</span>
-                <span className={themeClasses.textSecondary}>↑/↓ for history</span>
+                <span className={themeClasses.textSecondary}>Ctrl+Z/Y: Undo/Redo</span>
+                <span className={themeClasses.textSecondary}>Ctrl+C/V: Copy/Paste</span>
+                <span className={themeClasses.textSecondary}>↑/↓: History</span>
                 <span className={themeClasses.textSecondary}>{terminals.length} terminal{terminals.length > 1 ? 's' : ''}</span>
               </div>
             </div>
@@ -756,23 +984,18 @@ const Terminal: React.FC<TerminalProps> = ({ isOpen, onClose, onToggleSize, isMi
         </div>
       )}
 
-      {/* Resize Handle */}
+      {/* Enhanced Resize Handle */}
       {!isMinimized && (
         <div
-          className="absolute bottom-0 right-0 w-4 h-4 cursor-se-resize"
-          onMouseDown={(e) => {
-            e.preventDefault();
-            setIsResizing(true);
-            setDragStart({
-              x: e.clientX - size.width,
-              y: e.clientY - size.height
-            });
-          }}
+          className="absolute bottom-0 right-0 w-4 h-4 cursor-se-resize hover:bg-blue-500/20 transition-colors"
+          onMouseDown={handleResizeStart}
+          title="Drag to resize"
         >
-          <div className={`w-full h-full ${themeClasses.textSecondary} opacity-50`}>
+          <div className={`w-full h-full ${themeClasses.textSecondary} opacity-50 hover:opacity-100 transition-opacity`}>
             <svg viewBox="0 0 16 16" className="w-full h-full">
               <path d="M16 16L10 16L16 10Z" fill="currentColor" />
               <path d="M16 16L6 16L16 6Z" fill="currentColor" />
+              <path d="M16 16L2 16L16 2Z" fill="currentColor" />
             </svg>
           </div>
         </div>
