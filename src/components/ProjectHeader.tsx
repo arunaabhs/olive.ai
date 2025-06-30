@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Play, Square, RotateCcw, Share, X, Plus, MoreHorizontal, ArrowRight, Terminal, Zap, Code, FileText, Settings, Sun, Moon, ChevronDown, Sparkles, Users, Globe, Copy, Check, Wifi, WifiOff } from 'lucide-react';
+import { Play, Square, RotateCcw, Share, X, Plus, MoreHorizontal, ArrowRight, Terminal, Zap, Code, FileText, Settings, Sun, Moon, ChevronDown, Sparkles, Users, Globe } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 
 interface ProjectHeaderProps {
@@ -34,8 +34,6 @@ const ProjectHeader: React.FC<ProjectHeaderProps> = ({
   collaborators = []
 }) => {
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
-  const [linkCopied, setLinkCopied] = useState(false);
-  const [connectionStatus, setConnectionStatus] = useState<'connected' | 'connecting' | 'disconnected'>('connected');
   const { user } = useAuth();
 
   const getFileIcon = (fileName: string) => {
@@ -72,34 +70,13 @@ const ProjectHeader: React.FC<ProjectHeaderProps> = ({
     setActiveDropdown(activeDropdown === menu ? null : menu);
   };
 
-  const handleShareProject = async () => {
+  const handleShareProject = () => {
     const shareUrl = `${window.location.origin}/project/${projectId}`;
-    
-    try {
-      await navigator.clipboard.writeText(shareUrl);
-      setLinkCopied(true);
-      setTimeout(() => setLinkCopied(false), 2000);
-    } catch (err) {
-      // Fallback for browsers that don't support clipboard API
-      const textArea = document.createElement('textarea');
-      textArea.value = shareUrl;
-      document.body.appendChild(textArea);
-      textArea.select();
-      document.execCommand('copy');
-      document.body.removeChild(textArea);
-      setLinkCopied(true);
-      setTimeout(() => setLinkCopied(false), 2000);
-    }
-  };
-
-  const handleInviteCollaborator = () => {
-    const shareUrl = `${window.location.origin}/project/${projectId}`;
-    const message = `Join my coding session on Olive! Click here to collaborate: ${shareUrl}`;
-    
-    // Try to open email client
-    const emailSubject = encodeURIComponent('Join my Olive coding session');
-    const emailBody = encodeURIComponent(message);
-    window.open(`mailto:?subject=${emailSubject}&body=${emailBody}`);
+    navigator.clipboard.writeText(shareUrl).then(() => {
+      alert('Project link copied to clipboard!');
+    }).catch(() => {
+      alert(`Share this project: ${shareUrl}`);
+    });
   };
 
   const themeClasses = isDarkMode ? {
@@ -125,8 +102,6 @@ const ProjectHeader: React.FC<ProjectHeaderProps> = ({
     tabInactive: 'text-gray-600 hover:text-gray-800 hover:bg-white/60',
     dropdown: 'bg-white border-gray-200'
   };
-
-  const onlineCollaborators = collaborators.filter(c => c.isOnline);
 
   return (
     <div className={`border-b flex flex-col ${themeClasses.bg} ${themeClasses.border} relative`}>
@@ -228,7 +203,7 @@ const ProjectHeader: React.FC<ProjectHeaderProps> = ({
               )}
             </div>
 
-            {/* Enhanced Collaboration Menu */}
+            {/* Collaboration Menu */}
             <div className="relative">
               <button
                 onClick={() => handleDropdownClick('collaboration')}
@@ -236,127 +211,61 @@ const ProjectHeader: React.FC<ProjectHeaderProps> = ({
               >
                 <span>Collaboration</span>
                 <ChevronDown className="w-3 h-3" />
-                {onlineCollaborators.length > 0 && (
-                  <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-                )}
               </button>
               {activeDropdown === 'collaboration' && (
-                <div className={`absolute top-full left-0 mt-1 w-96 ${themeClasses.dropdown} border rounded-lg shadow-lg z-50`}>
+                <div className={`absolute top-full left-0 mt-1 w-80 ${themeClasses.dropdown} border rounded-lg shadow-lg z-50`}>
                   <div className="py-2">
-                    {/* Room Information */}
-                    <div className="px-4 py-3 border-b border-gray-200">
-                      <div className="flex items-center justify-between mb-2">
-                        <div className="flex items-center space-x-2">
-                          <Globe className="w-4 h-4 text-blue-500" />
-                          <div>
-                            <p className={`text-sm font-medium ${themeClasses.text}`}>Project Room</p>
-                            <p className={`text-xs ${themeClasses.textSecondary}`}>ID: {projectId}</p>
-                          </div>
-                        </div>
-                        <div className="flex items-center space-x-1">
-                          {connectionStatus === 'connected' ? (
-                            <Wifi className="w-4 h-4 text-green-500" />
-                          ) : (
-                            <WifiOff className="w-4 h-4 text-red-500" />
-                          )}
-                          <span className={`text-xs ${
-                            connectionStatus === 'connected' ? 'text-green-600' : 'text-red-600'
-                          }`}>
-                            {connectionStatus === 'connected' ? 'Connected' : 'Disconnected'}
-                          </span>
-                        </div>
-                      </div>
-                      
-                      {/* Quick Share */}
+                    <div className="px-4 py-2 border-b border-gray-200">
                       <div className="flex items-center space-x-2">
-                        <input
-                          type="text"
-                          value={`${window.location.origin}/project/${projectId}`}
-                          readOnly
-                          className={`flex-1 text-xs px-2 py-1 border rounded ${themeClasses.surface} ${themeClasses.border}`}
-                        />
-                        <button
-                          onClick={handleShareProject}
-                          className="flex items-center space-x-1 bg-blue-600 text-white px-2 py-1 rounded text-xs hover:bg-blue-700 transition-colors"
-                        >
-                          {linkCopied ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
-                          <span>{linkCopied ? 'Copied' : 'Copy'}</span>
-                        </button>
+                        <Globe className="w-4 h-4 text-blue-500" />
+                        <div>
+                          <p className={`text-sm font-medium ${themeClasses.text}`}>Project Room</p>
+                          <p className={`text-xs ${themeClasses.textSecondary}`}>ID: {projectId}</p>
+                        </div>
                       </div>
                     </div>
                     
                     {/* Active Collaborators */}
-                    <div className="px-4 py-2 border-b border-gray-200">
-                      <div className="flex items-center justify-between mb-2">
-                        <p className={`text-xs font-medium ${themeClasses.text}`}>
-                          Active Collaborators ({onlineCollaborators.length})
-                        </p>
-                        <button
-                          onClick={handleInviteCollaborator}
-                          className="flex items-center space-x-1 text-xs text-blue-600 hover:text-blue-700"
-                        >
-                          <UserPlus className="w-3 h-3" />
-                          <span>Invite</span>
-                        </button>
-                      </div>
-                      
-                      {onlineCollaborators.length > 0 ? (
-                        <div className="space-y-2 max-h-32 overflow-y-auto">
-                          {onlineCollaborators.map((collaborator, index) => (
-                            <div key={index} className="flex items-center justify-between">
-                              <div className="flex items-center space-x-2">
-                                <div 
-                                  className="w-6 h-6 rounded-full flex items-center justify-center text-white text-xs font-medium"
-                                  style={{ backgroundColor: collaborator.color }}
-                                >
-                                  {collaborator.name.charAt(0).toUpperCase()}
-                                </div>
-                                <div>
-                                  <p className={`text-xs ${themeClasses.text} font-medium`}>{collaborator.name}</p>
-                                  <p className={`text-xs ${themeClasses.textSecondary}`}>{collaborator.email}</p>
-                                </div>
+                    {collaborators.length > 0 && (
+                      <div className="px-4 py-2 border-b border-gray-200">
+                        <p className={`text-xs font-medium ${themeClasses.text} mb-2`}>Active Collaborators ({collaborators.filter(c => c.isOnline).length})</p>
+                        <div className="space-y-1">
+                          {collaborators.filter(c => c.isOnline).map((collaborator, index) => (
+                            <div key={index} className="flex items-center space-x-2">
+                              <div 
+                                className="w-4 h-4 rounded-full flex items-center justify-center text-white text-xs font-medium"
+                                style={{ backgroundColor: collaborator.color }}
+                              >
+                                {collaborator.name.charAt(0).toUpperCase()}
                               </div>
-                              <div className="flex items-center space-x-1">
-                                {collaborator.isOwner && (
-                                  <span className="text-xs bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded">Owner</span>
-                                )}
-                                <div className="w-2 h-2 bg-green-400 rounded-full"></div>
-                              </div>
+                              <span className={`text-xs ${themeClasses.text}`}>{collaborator.name}</span>
+                              {collaborator.isOwner && (
+                                <span className="text-xs bg-blue-100 text-blue-700 px-1 py-0.5 rounded">Owner</span>
+                              )}
                             </div>
                           ))}
                         </div>
-                      ) : (
-                        <p className={`text-xs ${themeClasses.textSecondary} italic`}>
-                          No other collaborators online. Share the link to invite others!
-                        </p>
-                      )}
-                    </div>
+                      </div>
+                    )}
                     
-                    {/* Collaboration Actions */}
+                    <div 
+                      className={`px-4 py-2 ${themeClasses.surfaceHover} cursor-pointer flex items-center space-x-3`}
+                      onClick={handleShareProject}
+                    >
+                      <Share className="w-4 h-4 text-green-600" />
+                      <span className={themeClasses.text}>Share Project Link</span>
+                    </div>
+                    <div className={`px-4 py-2 ${themeClasses.surfaceHover} cursor-pointer flex items-center space-x-3`}>
+                      <Users className="w-4 h-4 text-blue-600" />
+                      <span className={themeClasses.text}>Manage Collaborators</span>
+                    </div>
+                    <div className={`px-4 py-2 ${themeClasses.surfaceHover} cursor-pointer flex items-center space-x-3`}>
+                      <Settings className="w-4 h-4 text-gray-600" />
+                      <span className={themeClasses.text}>Collaboration Settings</span>
+                    </div>
+                    <hr className={`my-2 ${themeClasses.border}`} />
                     <div className="px-4 py-2">
-                      <div 
-                        className={`px-3 py-2 ${themeClasses.surfaceHover} cursor-pointer flex items-center space-x-3 rounded`}
-                        onClick={handleShareProject}
-                      >
-                        <Share className="w-4 h-4 text-green-600" />
-                        <span className={themeClasses.text}>Share Project Link</span>
-                      </div>
-                      <div 
-                        className={`px-3 py-2 ${themeClasses.surfaceHover} cursor-pointer flex items-center space-x-3 rounded`}
-                        onClick={handleInviteCollaborator}
-                      >
-                        <UserPlus className="w-4 h-4 text-blue-600" />
-                        <span className={themeClasses.text}>Invite via Email</span>
-                      </div>
-                      <div className={`px-3 py-2 ${themeClasses.surfaceHover} cursor-pointer flex items-center space-x-3 rounded`}>
-                        <Settings className="w-4 h-4 text-gray-600" />
-                        <span className={themeClasses.text}>Room Settings</span>
-                      </div>
-                    </div>
-                    
-                    {/* Current User Info */}
-                    <div className="px-4 py-2 border-t border-gray-200">
-                      <p className={`text-xs ${themeClasses.textSecondary} mb-2`}>Signed in as:</p>
+                      <p className={`text-xs ${themeClasses.textSecondary} mb-2`}>Current User:</p>
                       <div className="flex items-center space-x-2">
                         <div className="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center text-white text-xs font-medium">
                           {user?.email?.charAt(0).toUpperCase() || 'G'}
@@ -477,16 +386,15 @@ const ProjectHeader: React.FC<ProjectHeaderProps> = ({
         </div>
         
         <div className="flex items-center space-x-2">
-          {/* Enhanced Project Info */}
+          {/* Project Info */}
           <div className={`px-3 py-1 ${themeClasses.surface} rounded-full text-xs ${themeClasses.textSecondary} flex items-center space-x-2`}>
             <Globe className="w-3 h-3" />
             <span>Project: {projectId.split('-')[0]}...</span>
-            {onlineCollaborators.length > 0 && (
+            {collaborators.length > 0 && (
               <>
                 <div className="w-px h-3 bg-gray-300"></div>
                 <Users className="w-3 h-3" />
-                <span>{onlineCollaborators.length} online</span>
-                <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                <span>{collaborators.filter(c => c.isOnline).length} online</span>
               </>
             )}
           </div>
@@ -530,13 +438,13 @@ const ProjectHeader: React.FC<ProjectHeaderProps> = ({
             <Sparkles className="w-4 h-4" />
           </button>
 
-          {/* Enhanced Share Button */}
+          {/* Share Button */}
           <button 
             onClick={handleShareProject}
             className={`flex items-center space-x-2 ${themeClasses.surface} ${themeClasses.surfaceHover} ${themeClasses.textSecondary} border ${themeClasses.border} px-3 py-2 rounded-full transition-all duration-200 text-sm font-light`}
           >
-            {linkCopied ? <Check className="w-3 h-3 text-green-600" /> : <Share className="w-3 h-3" />}
-            <span>{linkCopied ? 'Copied!' : 'Share'}</span>
+            <Share className="w-3 h-3" />
+            <span>Share</span>
             <ArrowRight className="w-3 h-3" />
           </button>
 

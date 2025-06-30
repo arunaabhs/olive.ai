@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Users, Globe, Share, ArrowLeft, UserPlus, Settings, Copy, Check, AlertCircle, Wifi, WifiOff } from 'lucide-react';
+import { Users, Globe, Share, ArrowLeft, UserPlus, Settings } from 'lucide-react';
 import Dashboard from './Dashboard';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -12,9 +12,6 @@ const ProjectRoom: React.FC = () => {
   const [projectInfo, setProjectInfo] = useState<any>(null);
   const [collaborators, setCollaborators] = useState<any[]>([]);
   const [showWelcome, setShowWelcome] = useState(true);
-  const [connectionStatus, setConnectionStatus] = useState<'connecting' | 'connected' | 'error'>('connecting');
-  const [linkCopied, setLinkCopied] = useState(false);
-  const [joinError, setJoinError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!projectId) {
@@ -22,118 +19,64 @@ const ProjectRoom: React.FC = () => {
       return;
     }
 
-    // Enhanced project joining with better error handling
+    // Simulate joining project room
     const joinProject = async () => {
       setIsJoining(true);
-      setConnectionStatus('connecting');
-      setJoinError(null);
       
-      try {
-        // Simulate API call to join project with retry logic
-        await new Promise((resolve, reject) => {
-          const timeout = setTimeout(() => {
-            // Simulate occasional connection failures for testing
-            if (Math.random() > 0.1) { // 90% success rate
-              resolve(true);
-            } else {
-              reject(new Error('Connection timeout'));
-            }
-          }, 1500);
-        });
-        
-        // Mock project data with enhanced information
-        setProjectInfo({
-          id: projectId,
-          name: `Collaborative Project ${projectId.slice(-8)}`,
-          owner: user?.email?.split('@')[0] || 'Project Owner',
-          createdAt: new Date(),
-          isPublic: true,
-          description: 'Real-time collaborative coding environment',
-          lastActivity: new Date()
-        });
+      // Simulate API call to join project
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      
+      // Mock project data
+      setProjectInfo({
+        id: projectId,
+        name: `Collaborative Project ${projectId.slice(-8)}`,
+        owner: 'Project Owner',
+        createdAt: new Date(),
+        isPublic: true
+      });
 
-        // Enhanced mock collaborators with more realistic data
-        const mockCollaborators = [
-          {
-            id: '1',
-            name: user?.email?.split('@')[0] || 'You',
-            email: user?.email || 'guest@example.com',
-            isOwner: true,
-            isOnline: true,
-            cursor: { line: 0, column: 0 },
-            color: '#3B82F6',
-            joinedAt: new Date(),
-            lastSeen: new Date()
-          }
-        ];
-
-        // Add additional collaborators if room has been shared
-        const roomData = localStorage.getItem(`olive-room-${projectId}`);
-        if (roomData) {
-          const parsedData = JSON.parse(roomData);
-          if (parsedData.collaborators) {
-            mockCollaborators.push(...parsedData.collaborators);
-          }
+      // Mock collaborators
+      setCollaborators([
+        {
+          id: '1',
+          name: user?.email?.split('@')[0] || 'You',
+          email: user?.email || 'guest@example.com',
+          isOwner: false,
+          isOnline: true,
+          cursor: { line: 0, column: 0 },
+          color: '#3B82F6'
+        },
+        {
+          id: '2',
+          name: 'Collaborator',
+          email: 'friend@example.com',
+          isOwner: true,
+          isOnline: Math.random() > 0.3,
+          cursor: { line: 5, column: 12 },
+          color: '#10B981'
         }
+      ]);
 
-        setCollaborators(mockCollaborators);
-        setConnectionStatus('connected');
-        setIsJoining(false);
-        
-        // Store room information for persistence
-        localStorage.setItem(`olive-room-${projectId}`, JSON.stringify({
-          projectInfo: {
-            id: projectId,
-            name: `Collaborative Project ${projectId.slice(-8)}`,
-            owner: user?.email?.split('@')[0] || 'Project Owner',
-            createdAt: new Date().toISOString()
-          },
-          collaborators: mockCollaborators,
-          lastAccessed: new Date().toISOString()
-        }));
-        
-        // Show welcome message for 3 seconds
-        setTimeout(() => setShowWelcome(false), 3000);
-        
-      } catch (error) {
-        console.error('Failed to join project:', error);
-        setConnectionStatus('error');
-        setJoinError(error instanceof Error ? error.message : 'Failed to connect to project room');
-        setIsJoining(false);
-      }
+      setIsJoining(false);
+      
+      // Show welcome message for 3 seconds
+      setTimeout(() => setShowWelcome(false), 3000);
     };
 
     joinProject();
   }, [projectId, navigate, user]);
 
-  const handleShareProject = async () => {
+  const handleShareProject = () => {
     const shareUrl = `${window.location.origin}/project/${projectId}`;
-    
-    try {
-      await navigator.clipboard.writeText(shareUrl);
-      setLinkCopied(true);
-      setTimeout(() => setLinkCopied(false), 2000);
-    } catch (err) {
-      // Fallback for browsers that don't support clipboard API
-      const textArea = document.createElement('textarea');
-      textArea.value = shareUrl;
-      document.body.appendChild(textArea);
-      textArea.select();
-      document.execCommand('copy');
-      document.body.removeChild(textArea);
-      setLinkCopied(true);
-      setTimeout(() => setLinkCopied(false), 2000);
-    }
+    navigator.clipboard.writeText(shareUrl).then(() => {
+      alert('Project link copied to clipboard!');
+    }).catch(() => {
+      alert(`Share this project: ${shareUrl}`);
+    });
   };
 
   const handleLeaveProject = () => {
-    // Clean up room data
-    localStorage.removeItem(`olive-room-${projectId}`);
     navigate('/dashboard');
-  };
-
-  const handleRetryConnection = () => {
-    window.location.reload();
   };
 
   if (isJoining) {
@@ -145,49 +88,18 @@ const ProjectRoom: React.FC = () => {
           </div>
           
           <h2 className="text-2xl font-light text-gray-800 mb-4">
-            {connectionStatus === 'connecting' ? 'Joining Project Room' : 'Connection Error'}
+            Joining Project Room
           </h2>
           
-          {connectionStatus === 'connecting' && (
-            <>
-              <p className="text-gray-600 font-light mb-6">
-                Connecting to collaborative workspace...
-              </p>
-              
-              <div className="flex items-center justify-center space-x-2 mb-4">
-                <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce"></div>
-                <div className="w-2 h-2 bg-green-500 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
-                <div className="w-2 h-2 bg-purple-500 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
-              </div>
-            </>
-          )}
+          <p className="text-gray-600 font-light mb-6">
+            Connecting to collaborative workspace...
+          </p>
           
-          {connectionStatus === 'error' && joinError && (
-            <>
-              <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
-                <div className="flex items-center space-x-2 text-red-700">
-                  <AlertCircle className="w-5 h-5" />
-                  <span className="font-medium">Connection Failed</span>
-                </div>
-                <p className="text-red-600 text-sm mt-2">{joinError}</p>
-              </div>
-              
-              <div className="flex items-center justify-center space-x-4">
-                <button
-                  onClick={handleRetryConnection}
-                  className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-light transition-all duration-200"
-                >
-                  Retry Connection
-                </button>
-                <button
-                  onClick={() => navigate('/dashboard')}
-                  className="bg-gray-600 hover:bg-gray-700 text-white px-6 py-2 rounded-lg font-light transition-all duration-200"
-                >
-                  Back to Dashboard
-                </button>
-              </div>
-            </>
-          )}
+          <div className="flex items-center justify-center space-x-2">
+            <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce"></div>
+            <div className="w-2 h-2 bg-green-500 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+            <div className="w-2 h-2 bg-purple-500 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+          </div>
           
           <p className="text-sm text-gray-500 mt-4 font-light">
             Project ID: {projectId}
@@ -212,15 +124,6 @@ const ProjectRoom: React.FC = () => {
           <p className="text-gray-600 font-light mb-8">
             You've successfully joined the collaborative workspace. Start coding together in real-time!
           </p>
-          
-          {/* Connection Status */}
-          <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
-            <div className="flex items-center justify-center space-x-2 text-green-700">
-              <Wifi className="w-5 h-5" />
-              <span className="font-medium">Connected Successfully</span>
-            </div>
-            <p className="text-green-600 text-sm mt-1">Real-time collaboration is active</p>
-          </div>
           
           <div className="bg-white/60 backdrop-blur-sm rounded-xl p-6 border border-gray-200/50 mb-8">
             <h3 className="text-lg font-medium text-gray-800 mb-4">Active Collaborators</h3>
@@ -255,8 +158,8 @@ const ProjectRoom: React.FC = () => {
               onClick={handleShareProject}
               className="flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-full font-light transition-all duration-200"
             >
-              {linkCopied ? <Check className="w-4 h-4" /> : <Share className="w-4 h-4" />}
-              <span>{linkCopied ? 'Link Copied!' : 'Share Project'}</span>
+              <Share className="w-4 h-4" />
+              <span>Share Project</span>
             </button>
             
             <button
@@ -275,7 +178,7 @@ const ProjectRoom: React.FC = () => {
   // Render the main dashboard with project context
   return (
     <div className="h-screen flex flex-col">
-      {/* Enhanced Collaboration Header */}
+      {/* Collaboration Header */}
       <div className="bg-gradient-to-r from-blue-600 to-green-600 text-white px-6 py-3 flex items-center justify-between">
         <div className="flex items-center space-x-4">
           <div className="flex items-center space-x-2">
@@ -286,18 +189,6 @@ const ProjectRoom: React.FC = () => {
           <div className="flex items-center space-x-2">
             <Users className="w-4 h-4" />
             <span className="text-sm">{collaborators.filter(c => c.isOnline).length} online</span>
-          </div>
-          
-          {/* Connection Status Indicator */}
-          <div className="flex items-center space-x-1">
-            {connectionStatus === 'connected' ? (
-              <Wifi className="w-4 h-4 text-green-300" />
-            ) : (
-              <WifiOff className="w-4 h-4 text-red-300" />
-            )}
-            <span className="text-xs">
-              {connectionStatus === 'connected' ? 'Connected' : 'Disconnected'}
-            </span>
           </div>
           
           <div className="flex items-center -space-x-2">
@@ -324,8 +215,8 @@ const ProjectRoom: React.FC = () => {
             onClick={handleShareProject}
             className="flex items-center space-x-2 bg-white/20 hover:bg-white/30 px-4 py-2 rounded-full transition-all duration-200"
           >
-            {linkCopied ? <Check className="w-4 h-4" /> : <Share className="w-4 h-4" />}
-            <span className="text-sm">{linkCopied ? 'Copied!' : 'Share'}</span>
+            <Share className="w-4 h-4" />
+            <span className="text-sm">Share</span>
           </button>
           
           <button
