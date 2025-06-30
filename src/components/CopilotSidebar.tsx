@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Send, Loader2, X, Brain, Copy, Check, ChevronDown, Paperclip, Mic } from 'lucide-react';
 import { geminiAPI } from '../lib/gemini';
+import { openRouterAPI } from '../lib/openrouter';
 
 interface CopilotSidebarProps {
   isOpen: boolean;
@@ -23,6 +24,7 @@ interface AIModel {
   provider: string;
   speed: string;
   description: string;
+  isLive?: boolean;
 }
 
 const CopilotSidebar: React.FC<CopilotSidebarProps> = ({ isOpen, onClose, currentCode, isDarkMode = false }) => {
@@ -45,21 +47,24 @@ const CopilotSidebar: React.FC<CopilotSidebarProps> = ({ isOpen, onClose, curren
       name: 'Gemini 2.0 Flash',
       provider: 'Google',
       speed: '3x',
-      description: 'Fast and efficient for general tasks'
+      description: 'Fast and efficient for general tasks',
+      isLive: true
     },
     {
-      id: 'deepseek-l1',
-      name: 'DeepSeek L1',
+      id: 'deepseek-r1',
+      name: 'DeepSeek R1',
       provider: 'DeepSeek',
       speed: '2x',
-      description: 'Advanced reasoning and code generation'
+      description: 'Advanced reasoning and code generation',
+      isLive: true
     },
     {
       id: 'llama-3.3',
       name: 'Llama 3.3',
       provider: 'Meta',
       speed: '1x',
-      description: 'Large language model for complex tasks'
+      description: 'Large language model for complex tasks',
+      isLive: false
     }
   ];
 
@@ -151,8 +156,27 @@ const CopilotSidebar: React.FC<CopilotSidebarProps> = ({ isOpen, onClose, curren
           setApiError(error instanceof Error ? error.message : 'Failed to connect to Gemini API');
           responseContent = `❌ **Gemini API Error**: ${error instanceof Error ? error.message : 'Unknown error occurred'}\n\nPlease check your API key configuration or try again later.`;
         }
+      } else if (selectedModel === 'deepseek-r1') {
+        // Use real DeepSeek R1 API via OpenRouter
+        try {
+          if (currentCode && currentCode.trim()) {
+            // If there's code context, use it
+            responseContent = await openRouterAPI.generateCodeSuggestions(
+              currentCode,
+              'javascript', // You might want to detect language from file extension
+              userMessage.content
+            );
+          } else {
+            // General query without code context
+            responseContent = await openRouterAPI.generateDeepSeekResponse(userMessage.content);
+          }
+        } catch (error) {
+          console.error('DeepSeek API Error:', error);
+          setApiError(error instanceof Error ? error.message : 'Failed to connect to DeepSeek API');
+          responseContent = `❌ **DeepSeek API Error**: ${error instanceof Error ? error.message : 'Unknown error occurred'}\n\nPlease check your OpenRouter API key configuration or try again later.`;
+        }
       } else {
-        // Mock responses for other models (DeepSeek and Llama)
+        // Mock responses for Llama (not integrated yet)
         await new Promise(resolve => setTimeout(resolve, 1000 + Math.random() * 2000));
         responseContent = generateMockResponse(userMessage.content, currentCode, selectedModel);
       }
@@ -259,6 +283,7 @@ const CopilotSidebar: React.FC<CopilotSidebarProps> = ({ isOpen, onClose, curren
   };
 
   const selectedModelInfo = aiModels.find(m => m.id === selectedModel);
+  const isModelLive = selectedModelInfo?.isLive && !apiError;
 
   return (
     <div className={`h-full flex flex-col ${themeClasses.bg} ${themeClasses.border} border-l`}>
@@ -270,13 +295,13 @@ const CopilotSidebar: React.FC<CopilotSidebarProps> = ({ isOpen, onClose, curren
               <Brain className="w-3 h-3 text-white" />
             </div>
             <div className={`absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full animate-pulse ${
-              selectedModel === 'gemini-2.0-flash' && !apiError ? 'bg-green-400' : 'bg-yellow-400'
+              isModelLive ? 'bg-green-400' : 'bg-yellow-400'
             }`}></div>
           </div>
           <div>
             <h3 className={`font-semibold ${themeClasses.text} text-xs`}>Ask Copilot</h3>
             <p className={`text-xs ${themeClasses.textSecondary}`}>
-              {selectedModel === 'gemini-2.0-flash' && !apiError ? 'AI-powered assistant' : 'Simulated responses'}
+              {isModelLive ? 'AI-powered assistant' : 'Simulated responses'}
             </p>
           </div>
         </div>
@@ -294,7 +319,7 @@ const CopilotSidebar: React.FC<CopilotSidebarProps> = ({ isOpen, onClose, curren
       {apiError && (
         <div className="px-3 py-2 bg-red-50 border-b border-red-200">
           <p className="text-xs text-red-700">
-            ⚠️ Gemini API Error: {apiError}
+            ⚠️ API Error: {apiError}
           </p>
         </div>
       )}
@@ -311,8 +336,8 @@ const CopilotSidebar: React.FC<CopilotSidebarProps> = ({ isOpen, onClose, curren
             <h2 className={`text-lg font-semibold ${themeClasses.text} mb-2`}>Ask Copilot</h2>
             
             <p className={`text-xs ${themeClasses.textSecondary} mb-4 leading-relaxed max-w-xs`}>
-              {selectedModel === 'gemini-2.0-flash' 
-                ? 'Powered by Google Gemini 2.0 Flash. Real AI responses enabled!'
+              {isModelLive
+                ? `Powered by ${selectedModelInfo?.name}. Real AI responses enabled!`
                 : 'Copilot is powered by AI, so mistakes are possible. Review output carefully before use.'
               }
             </p>
@@ -340,7 +365,7 @@ const CopilotSidebar: React.FC<CopilotSidebarProps> = ({ isOpen, onClose, curren
                         <span className={`text-xs font-medium ${themeClasses.textSecondary}`}>
                           {selectedModelInfo?.name || 'AI Assistant'}
                         </span>
-                        {message.model === 'gemini-2.0-flash' && !apiError && (
+                        {message.model && aiModels.find(m => m.id === message.model)?.isLive && !apiError && (
                           <span className="text-xs bg-green-100 text-green-700 px-1.5 py-0.5 rounded-full">
                             Live
                           </span>
@@ -435,7 +460,7 @@ const CopilotSidebar: React.FC<CopilotSidebarProps> = ({ isOpen, onClose, curren
               >
                 <div className="flex items-center space-x-2">
                   <span className={`font-medium ${themeClasses.text}`}>{selectedModelInfo?.name || 'Gemini 2.0 Flash'}</span>
-                  {selectedModel === 'gemini-2.0-flash' && !apiError && (
+                  {isModelLive && (
                     <span className="text-xs bg-green-100 text-green-700 px-1.5 py-0.5 rounded-full">
                       Live
                     </span>
@@ -479,7 +504,7 @@ const CopilotSidebar: React.FC<CopilotSidebarProps> = ({ isOpen, onClose, curren
                             <span className={`text-xs ${selectedModel === model.id ? 'text-blue-100' : themeClasses.textSecondary}`}>
                               {model.speed}
                             </span>
-                            {model.id === 'gemini-2.0-flash' && (
+                            {model.isLive && (
                               <span className="text-xs text-green-500">Live</span>
                             )}
                           </div>
