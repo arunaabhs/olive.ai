@@ -181,7 +181,7 @@ const CopilotSidebar: React.FC<CopilotSidebarProps> = ({ isOpen, onClose, curren
           responseContent = `❌ **DeepSeek API Error**: ${error instanceof Error ? error.message : 'Unknown error occurred'}\n\nPlease check your OpenRouter API key configuration or try again later.`;
         }
       } else if (selectedModel === 'llama-4-maverick') {
-        // Use real Llama 4 Maverick API via OpenRouter
+        // Use real Llama 4 Maverick API via OpenRouter with dedicated API key
         try {
           if (currentCode && currentCode.trim()) {
             // If there's code context, use it
@@ -198,7 +198,7 @@ const CopilotSidebar: React.FC<CopilotSidebarProps> = ({ isOpen, onClose, curren
         } catch (error) {
           console.error('Llama API Error:', error);
           setApiError(error instanceof Error ? error.message : 'Failed to connect to Llama API');
-          responseContent = `❌ **Llama API Error**: ${error instanceof Error ? error.message : 'Unknown error occurred'}\n\nPlease check your OpenRouter API key configuration or try again later.`;
+          responseContent = `❌ **Llama API Error**: ${error instanceof Error ? error.message : 'Unknown error occurred'}\n\nPlease check your Llama API key configuration (VITE_LLAMA_API_KEY) or try again later.`;
         }
       } else {
         // Fallback for any other models

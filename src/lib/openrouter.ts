@@ -40,24 +40,45 @@ interface OpenRouterResponse {
 }
 
 export class OpenRouterAPI {
-  private apiKey: string;
+  private deepSeekApiKey: string;
+  private llamaApiKey: string;
   private baseUrl: string;
   private siteUrl: string;
   private siteName: string;
 
   constructor() {
-    this.apiKey = import.meta.env.VITE_OPENROUTER_API_KEY;
+    this.deepSeekApiKey = import.meta.env.VITE_OPENROUTER_API_KEY;
+    this.llamaApiKey = import.meta.env.VITE_LLAMA_API_KEY;
     this.baseUrl = import.meta.env.VITE_OPENROUTER_API_URL || 'https://openrouter.ai/api/v1/chat/completions';
     this.siteUrl = import.meta.env.VITE_SITE_URL || 'http://localhost:5173';
     this.siteName = import.meta.env.VITE_SITE_NAME || 'Olive Code Editor';
     
-    if (!this.apiKey) {
-      throw new Error('OpenRouter API key is not configured. Please check your environment variables.');
+    if (!this.deepSeekApiKey) {
+      console.warn('DeepSeek API key is not configured. DeepSeek functionality will be limited.');
+    }
+    
+    if (!this.llamaApiKey) {
+      console.warn('Llama API key is not configured. Llama functionality will be limited.');
+    }
+  }
+
+  private getApiKey(model: string): string {
+    if (model.includes('llama')) {
+      if (!this.llamaApiKey) {
+        throw new Error('Llama API key is not configured. Please check your VITE_LLAMA_API_KEY environment variable.');
+      }
+      return this.llamaApiKey;
+    } else {
+      if (!this.deepSeekApiKey) {
+        throw new Error('DeepSeek API key is not configured. Please check your VITE_OPENROUTER_API_KEY environment variable.');
+      }
+      return this.deepSeekApiKey;
     }
   }
 
   async generateResponse(prompt: string, model: string = 'deepseek/deepseek-r1-0528:free', context?: string, imageUrl?: string): Promise<string> {
     try {
+      const apiKey = this.getApiKey(model);
       const messages: OpenRouterMessage[] = [];
       
       // Add system context if provided
@@ -107,7 +128,7 @@ export class OpenRouterAPI {
       const response = await fetch(this.baseUrl, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${this.apiKey}`,
+          'Authorization': `Bearer ${apiKey}`,
           'HTTP-Referer': this.siteUrl,
           'X-Title': this.siteName,
           'Content-Type': 'application/json'
