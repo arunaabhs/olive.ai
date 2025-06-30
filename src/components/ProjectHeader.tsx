@@ -71,8 +71,7 @@ const ProjectHeader: React.FC<ProjectHeaderProps> = ({
   };
 
   const handleShareProject = () => {
-    // For WebContainer environment, use a simpler sharing approach
-    const shareUrl = `${window.location.origin}/dashboard?project=${projectId}`;
+    const shareUrl = `${window.location.origin}/project/${projectId}`;
     navigator.clipboard.writeText(shareUrl).then(() => {
       alert('Project link copied to clipboard!');
     }).catch(() => {

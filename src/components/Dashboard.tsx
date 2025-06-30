@@ -1,5 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import React, { useState, useRef } from 'react';
 import Sidebar from './Sidebar';
 import CodeEditor from './CodeEditor';
 import ProjectHeader from './ProjectHeader';
@@ -12,8 +11,7 @@ interface DashboardProps {
   collaborators?: any[];
 }
 
-const Dashboard: React.FC<DashboardProps> = ({ projectId: propProjectId, collaborators: propCollaborators = [] }) => {
-  const [searchParams] = useSearchParams();
+const Dashboard: React.FC<DashboardProps> = ({ projectId: propProjectId, collaborators = [] }) => {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [sidebarWidth, setSidebarWidth] = useState(256);
   const [copilotOpen, setCopilotOpen] = useState(false);
@@ -25,52 +23,12 @@ const Dashboard: React.FC<DashboardProps> = ({ projectId: propProjectId, collabo
   const [openTabs, setOpenTabs] = useState(['hello.js', 'example.py', 'sample.html']);
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [isResizing, setIsResizing] = useState<'sidebar' | 'copilot' | null>(null);
-  const [collaborators, setCollaborators] = useState(propCollaborators);
   
   const editorRef = useRef<any>(null);
   const { user } = useAuth();
 
-  // Get project ID from props, URL params, or generate one
-  const urlProjectId = searchParams.get('project');
-  const projectId = propProjectId || urlProjectId || (user?.id ? `user-${user.id}` : 'guest-project');
-
-  // Set up mock collaborators if we have a project ID from URL params
-  useEffect(() => {
-    if (urlProjectId && propCollaborators.length === 0) {
-      // Mock collaborators for shared project
-      setCollaborators([
-        {
-          id: '1',
-          name: user?.email?.split('@')[0] || 'You',
-          email: user?.email || 'guest@example.com',
-          isOwner: false,
-          isOnline: true,
-          cursor: { line: 0, column: 0 },
-          color: '#3B82F6'
-        },
-        {
-          id: '2',
-          name: 'Project Owner',
-          email: 'owner@example.com',
-          isOwner: true,
-          isOnline: Math.random() > 0.3,
-          cursor: { line: 5, column: 12 },
-          color: '#10B981'
-        },
-        {
-          id: '3',
-          name: 'Collaborator',
-          email: 'collab@example.com',
-          isOwner: false,
-          isOnline: Math.random() > 0.5,
-          cursor: { line: 12, column: 8 },
-          color: '#F59E0B'
-        }
-      ]);
-    } else if (propCollaborators.length > 0) {
-      setCollaborators(propCollaborators);
-    }
-  }, [urlProjectId, propCollaborators, user]);
+  // Use provided projectId or generate one based on user
+  const projectId = propProjectId || (user?.id ? `user-${user.id}` : 'guest-project');
 
   const handleGetCurrentCode = () => {
     if (editorRef.current) {

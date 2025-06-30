@@ -1,15 +1,2 @@
-# Handle client-side routing for React Router
-# Redirect all non-file requests to index.html for SPA routing
-/*    /index.html   200
-
-# Optional: Handle specific API routes if needed in the future
-/api/*  /api/:splat  200
-
-# Handle project room routes specifically
-/project/*  /index.html  200
-
-# Handle dashboard route
-/dashboard  /index.html  200
-
-# Fallback for any other routes
-/*  /index.html  200
+/project/* /index.html 200
+/* /index.html 200
