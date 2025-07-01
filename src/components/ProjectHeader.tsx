@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { Play, Square, RotateCcw, Share, X, Plus, MoreHorizontal, ArrowRight, Terminal, Zap, Code, FileText, Settings, Sun, Moon, ChevronDown, Sparkles, Users, Globe, File, FolderOpen, Save, Search, Copy, Paste, Scissors, RotateCw, Maximize, Minimize, Eye, EyeOff, Type, Palette, Keyboard, HelpCircle } from 'lucide-react';
+import { Play, Square, RotateCcw, Share, X, Plus, MoreHorizontal, ArrowRight, Terminal, Zap, Code, FileText, Settings, Sun, Moon, ChevronDown, Sparkles, Users, Globe, File, FolderOpen, Save, Search, Copy, Cast as Paste, Scissors, RotateCw, Maximize, Minimize, Eye, EyeOff, Type, Palette, Keyboard, HelpCircle } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useFileOperations } from '../hooks/useFileOperations';
 import { useEditorOperations } from '../hooks/useEditorOperations';
