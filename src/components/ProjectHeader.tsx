@@ -705,6 +705,10 @@ const ProjectHeader: React.FC<ProjectHeaderProps> = ({
         isOpen={showNewFileModal}
         onClose={() => setShowNewFileModal(false)}
         onCreateFile={(name, template) => createNewFile(name, template)}
+        onFileCreated={(fileName) => {
+          // This will be handled by the Dashboard component
+          console.log('New file created:', fileName);
+        }}
         isDarkMode={isDarkMode}
       />
 

@@ -23,6 +23,7 @@ const Dashboard: React.FC<DashboardProps> = ({ projectId: propProjectId, collabo
   const [openTabs, setOpenTabs] = useState(['hello.js', 'example.py', 'sample.html']);
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [isResizing, setIsResizing] = useState<'sidebar' | 'copilot' | null>(null);
+  const [userFiles, setUserFiles] = useState<string[]>(['hello.js', 'example.py', 'sample.html']);
   
   const editorRef = useRef<any>(null);
   const { user } = useAuth();
@@ -70,6 +71,23 @@ const Dashboard: React.FC<DashboardProps> = ({ projectId: propProjectId, collabo
     setOpenTabs([...openTabs, fileName]);
     setActiveTab(fileName);
   };
+  const handleFileSelect = (fileName: string) => {
+    if (!openTabs.includes(fileName)) {
+      setOpenTabs([...openTabs, fileName]);
+    }
+    setActiveTab(fileName);
+  };
+
+  const handleFileCreated = (fileName: string) => {
+    if (!userFiles.includes(fileName)) {
+      setUserFiles([...userFiles, fileName]);
+    }
+    if (!openTabs.includes(fileName)) {
+      setOpenTabs([...openTabs, fileName]);
+    }
+    setActiveTab(fileName);
+  };
+
 
   const handleRunCode = (code: string, language: string) => {
     if (!terminalOpen) {
@@ -169,6 +187,8 @@ const Dashboard: React.FC<DashboardProps> = ({ projectId: propProjectId, collabo
             isDarkMode={isDarkMode}
             projectId={projectId}
             collaborators={collaborators}
+            openTabs={openTabs}
+            onFileSelect={handleFileSelect}
           />
         </div>
         

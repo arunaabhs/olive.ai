@@ -5,10 +5,11 @@ interface NewFileModalProps {
   isOpen: boolean;
   onClose: () => void;
   onCreateFile: (name: string, template?: string) => void;
+  onFileCreated?: (fileName: string) => void;
   isDarkMode?: boolean;
 }
 
-const NewFileModal: React.FC<NewFileModalProps> = ({ isOpen, onClose, onCreateFile, isDarkMode = false }) => {
+const NewFileModal: React.FC<NewFileModalProps> = ({ isOpen, onClose, onCreateFile, onFileCreated, isDarkMode = false }) => {
   const [fileName, setFileName] = useState('');
   const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null);
 
@@ -184,6 +185,12 @@ console.log('Hello from markdown!');
     const finalFileName = fileName.includes('.') ? fileName : fileName + (template?.extension || '.txt');
     
     onCreateFile(finalFileName, template?.template);
+    
+    // Notify parent component about the new file
+    if (onFileCreated) {
+      onFileCreated(finalFileName);
+    }
+    
     setFileName('');
     setSelectedTemplate(null);
     onClose();
