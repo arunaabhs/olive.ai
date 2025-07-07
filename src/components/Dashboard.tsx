@@ -24,6 +24,7 @@ const Dashboard: React.FC<DashboardProps> = ({ projectId: propProjectId, collabo
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [isResizing, setIsResizing] = useState<'sidebar' | 'copilot' | null>(null);
   const [userFiles, setUserFiles] = useState<string[]>(['hello.js', 'example.py', 'sample.html']);
+  const [showNewFileInput, setShowNewFileInput] = useState(false);
   
   const editorRef = useRef<any>(null);
   const { user } = useAuth();
@@ -67,7 +68,8 @@ const Dashboard: React.FC<DashboardProps> = ({ projectId: propProjectId, collabo
   };
 
   const handleNewFile = () => {
-    const fileName = `untitled-${Date.now()}.js`;
+    // Trigger the inline file creation in sidebar
+    setShowNewFileInput(true);
     setOpenTabs([...openTabs, fileName]);
     setActiveTab(fileName);
   };
@@ -189,6 +191,8 @@ const Dashboard: React.FC<DashboardProps> = ({ projectId: propProjectId, collabo
             collaborators={collaborators}
             openTabs={openTabs}
             onFileSelect={handleFileSelect}
+            showNewFileInput={showNewFileInput}
+            onNewFileInputChange={setShowNewFileInput}
           />
         </div>
         

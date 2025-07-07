@@ -43,6 +43,8 @@ interface SidebarProps {
   collaborators?: any[];
   openTabs?: string[];
   onFileSelect?: (fileName: string) => void;
+  showNewFileInput?: boolean;
+  onNewFileInputChange?: (show: boolean) => void;
 }
 
 const Sidebar: React.FC<SidebarProps> = ({ 
@@ -53,11 +55,13 @@ const Sidebar: React.FC<SidebarProps> = ({
   projectId = 'default-project',
   collaborators = [],
   openTabs = [],
-  onFileSelect
+  onFileSelect,
+  showNewFileInput: externalShowNewFileInput = false,
+  onNewFileInputChange
 }) => {
   const [explorerExpanded, setExplorerExpanded] = useState(true);
   const [openEditorsExpanded, setOpenEditorsExpanded] = useState(true);
-  const [showNewFileInput, setShowNewFileInput] = useState(false);
+  const [internalShowNewFileInput, setInternalShowNewFileInput] = useState(false);
   const [newFileName, setNewFileName] = useState('');
   const [userFiles, setUserFiles] = useState<FileItem[]>([
     {
@@ -83,6 +87,17 @@ const Sidebar: React.FC<SidebarProps> = ({
   
   const navigate = useNavigate();
   const { user } = useAuth();
+
+  // Use external state if provided, otherwise use internal state
+  const showNewFileInput = externalShowNewFileInput || internalShowNewFileInput;
+  const setShowNewFileInput = onNewFileInputChange || setInternalShowNewFileInput;
+
+  // Auto-expand explorer when new file input is shown
+  useEffect(() => {
+    if (showNewFileInput) {
+      setExplorerExpanded(true);
+    }
+  }, [showNewFileInput]);
 
   const handleLogoClick = () => {
     navigate('/');
@@ -152,6 +167,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   const handleCreateNewFile = () => {
     setShowNewFileInput(true);
     setNewFileName('');
+    setExplorerExpanded(true); // Ensure explorer is expanded
   };
 
   const handleNewFileSubmit = (e: React.KeyboardEvent) => {
@@ -177,9 +193,6 @@ const Sidebar: React.FC<SidebarProps> = ({
     };
     
     setUserFiles(prev => [...prev, newFile]);
-    
-    // Also trigger the new file modal for additional setup
-    onNewFile();
     
     // Select the new file if callback is provided
     if (onFileSelect) {
@@ -344,13 +357,6 @@ const Sidebar: React.FC<SidebarProps> = ({
           </span>
         </button>
         <div className="flex items-center space-x-1">
-          <button 
-            onClick={handleCreateNewFile}
-            className={`p-1 ${themeClasses.surfaceHover} rounded transition-all duration-200`}
-            title="New File"
-          >
-            <Plus className={`w-3 h-3 ${themeClasses.textSecondary}`} />
-          </button>
           <button className={`p-1 ${themeClasses.surfaceHover} rounded transition-all duration-200`} title="More Actions">
             <MoreHorizontal className={`w-3 h-3 ${themeClasses.textSecondary}`} />
           </button>

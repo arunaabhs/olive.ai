@@ -101,7 +101,8 @@ const ProjectHeader: React.FC<ProjectHeaderProps> = ({
   };
 
   const handleNewFile = () => {
-    setShowNewFileModal(true);
+    // Trigger the same file creation as the sidebar plus button
+    onNewFile();
     setActiveDropdown(null);
   };
 
