@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { Play, Square, RotateCcw, Share, X, Plus, MoreHorizontal, ArrowRight, Terminal, Zap, Code, FileText, Settings, Sun, Moon, ChevronDown, Sparkles, Users, Globe, File, FolderOpen, Save, Search, Copy, Cast as Paste, Scissors, RotateCw, Maximize, Minimize, Eye, EyeOff, Type, Palette, Keyboard, HelpCircle } from 'lucide-react';
+import { Play, Square, RotateCcw, Share, X, Plus, MoreHorizontal, ArrowRight, Terminal, Zap, Code, FileText, Settings, Sun, Moon, ChevronDown, Sparkles, Users, Globe, File, FolderOpen, Save, Search, Copy, Cast as Paste, Scissors, RotateCw, Maximize, Minimize, Eye, EyeOff, Type, Palette, Keyboard, HelpCircle, Folder } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useFileOperations } from '../hooks/useFileOperations';
 import { useEditorOperations } from '../hooks/useEditorOperations';
@@ -202,6 +202,22 @@ const ProjectHeader: React.FC<ProjectHeaderProps> = ({
                           <span className={themeClasses.text}>New File</span>
                         </div>
                         <span className={`text-xs ${themeClasses.textSecondary}`}>Ctrl+N</span>
+                      </div>
+                      <div 
+                        className={`px-4 py-2 ${themeClasses.surfaceHover} cursor-pointer flex items-center justify-between`}
+                        onClick={() => {
+                          // Trigger folder creation
+                          if ((window as any).createNewFolder) {
+                            (window as any).createNewFolder();
+                          }
+                          setActiveDropdown(null);
+                        }}
+                      >
+                        <div className="flex items-center space-x-3">
+                          <Folder className="w-4 h-4" />
+                          <span className={themeClasses.text}>New Folder</span>
+                        </div>
+                        <span className={`text-xs ${themeClasses.textSecondary}`}>Ctrl+Shift+N</span>
                       </div>
                       <div 
                         className={`px-4 py-2 ${themeClasses.surfaceHover} cursor-pointer flex items-center justify-between`}

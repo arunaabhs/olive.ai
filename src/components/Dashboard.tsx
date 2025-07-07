@@ -25,6 +25,7 @@ const Dashboard: React.FC<DashboardProps> = ({ projectId: propProjectId, collabo
   const [isResizing, setIsResizing] = useState<'sidebar' | 'copilot' | null>(null);
   const [userFiles, setUserFiles] = useState<string[]>(['hello.js', 'example.py', 'sample.html']);
   const [showNewFileInput, setShowNewFileInput] = useState(false);
+  const [currentFolder, setCurrentFolder] = useState('My Project');
   
   const editorRef = useRef<any>(null);
   const { user } = useAuth();
@@ -70,10 +71,17 @@ const Dashboard: React.FC<DashboardProps> = ({ projectId: propProjectId, collabo
   const handleNewFile = () => {
     // Trigger the inline file creation in sidebar
     setShowNewFileInput(true);
-    setOpenTabs([...openTabs, fileName]);
-    setActiveTab(fileName);
   };
   const handleFileSelect = (fileName: string) => {
+  // Set up global function for folder creation
+  useEffect(() => {
+    (window as any).createNewFolder = () => {
+      // This will be handled by the sidebar component
+      setShowNewFileInput(false); // Close file input if open
+      // The sidebar will handle showing the folder input
+    };
+  }, []);
+
     if (!openTabs.includes(fileName)) {
       setOpenTabs([...openTabs, fileName]);
     }
@@ -193,6 +201,8 @@ const Dashboard: React.FC<DashboardProps> = ({ projectId: propProjectId, collabo
             onFileSelect={handleFileSelect}
             showNewFileInput={showNewFileInput}
             onNewFileInputChange={setShowNewFileInput}
+            currentFolder={currentFolder}
+            onFolderChange={setCurrentFolder}
           />
         </div>
         
