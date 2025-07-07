@@ -46,6 +46,8 @@ const Sidebar: React.FC<SidebarProps> = ({
   const [publicExpanded, setPublicExpanded] = useState(false);
   const [functionsExpanded, setFunctionsExpanded] = useState(false);
   const [openEditorsExpanded, setOpenEditorsExpanded] = useState(true);
+  const [showNewFileInput, setShowNewFileInput] = useState(false);
+  const [newFileName, setNewFileName] = useState('');
   const navigate = useNavigate();
   const { user } = useAuth();
 
@@ -180,6 +182,33 @@ const Sidebar: React.FC<SidebarProps> = ({
     { name: 'data-structures.py', closable: true, icon: '📊' },
     { name: 'web-components.html', closable: true, icon: '🌐' }
   ];
+
+  const handleCreateNewFile = () => {
+    setShowNewFileInput(true);
+    setNewFileName('');
+  };
+
+  const handleNewFileSubmit = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      if (newFileName.trim()) {
+        onNewFile(); // This will trigger the new file modal
+        setShowNewFileInput(false);
+        setNewFileName('');
+      }
+    } else if (e.key === 'Escape') {
+      setShowNewFileInput(false);
+      setNewFileName('');
+    }
+  };
+
+  const handleNewFileBlur = () => {
+    if (newFileName.trim()) {
+      onNewFile(); // This will trigger the new file modal
+    }
+    setShowNewFileInput(false);
+    setNewFileName('');
+  };
 
   const renderFileTree = (items: any[], level = 0) => {
     return items.map((item, index) => (
@@ -412,33 +441,68 @@ const Sidebar: React.FC<SidebarProps> = ({
 
       {/* File Explorer */}
       <div className="flex-1 overflow-y-auto">
-        <div 
-          className={`flex items-center justify-between p-3 ${themeClasses.surfaceHover} cursor-pointer transition-all duration-200`}
-          onClick={() => setExplorerExpanded(!explorerExpanded)}
-        >
-          <div className="flex items-center">
-            {explorerExpanded ? (
-              <ChevronDown className={`w-3 h-3 ${themeClasses.textSecondary} mr-1.5`} />
-            ) : (
-              <ChevronRight className={`w-3 h-3 ${themeClasses.textSecondary} mr-1.5`} />
-            )}
-            <span className={`text-xs font-medium ${themeClasses.textSecondary} uppercase tracking-wider`}>
-              Olive Project
-            </span>
+        <div className={`border-b ${themeClasses.border}`}>
+          <div 
+            className={`flex items-center justify-between p-3 ${themeClasses.surfaceHover} cursor-pointer transition-all duration-200`}
+            onClick={() => setExplorerExpanded(!explorerExpanded)}
+          >
+            <div className="flex items-center">
+              {explorerExpanded ? (
+                <ChevronDown className={`w-3 h-3 ${themeClasses.textSecondary} mr-1.5`} />
+              ) : (
+                <ChevronRight className={`w-3 h-3 ${themeClasses.textSecondary} mr-1.5`} />
+              )}
+              <span className={`text-xs font-medium ${themeClasses.textSecondary} uppercase tracking-wider`}>
+                Files
+              </span>
+            </div>
+            <div className="flex items-center space-x-2">
+              <span className={`text-xs ${themeClasses.textSecondary} ${themeClasses.surface} px-1.5 py-0.5 rounded-full`}>
+                {fileStructure.length}
+              </span>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleCreateNewFile();
+                }}
+                className={`p-1 ${themeClasses.surfaceHover} rounded transition-all duration-200`}
+                title="New File"
+              >
+                <Plus className={`w-3 h-3 ${themeClasses.textSecondary}`} />
+              </button>
+            </div>
           </div>
-          <span className={`text-xs ${themeClasses.textSecondary} ${themeClasses.surface} px-1.5 py-0.5 rounded-full`}>
-            {fileStructure.length}
-          </span>
         </div>
+        
         {explorerExpanded && (
           <div className="pb-4">
+            {/* New File Input */}
+            {showNewFileInput && (
+              <div className="px-4 py-2">
+                <input
+                  type="text"
+                  value={newFileName}
+                  onChange={(e) => setNewFileName(e.target.value)}
+                  onKeyDown={handleNewFileSubmit}
+                  onBlur={handleNewFileBlur}
+                  placeholder="Enter file name..."
+                  className={`w-full px-2 py-1 text-xs rounded border ${themeClasses.input} ${themeClasses.border} focus:outline-none focus:ring-1 focus:ring-blue-500`}
+                  autoFocus
+                />
+                <div className={`text-xs ${themeClasses.textSecondary} mt-1`}>
+                  Press Enter to create, Esc to cancel
+                </div>
+              </div>
+            )}
+            
+            {/* File Tree */}
             {renderFileTree(fileStructure)}
           </div>
         )}
       </div>
 
       {/* Sidebar Actions */}
-      <div className={`border-t p-3 space-y-1.5 ${themeClasses.border}`}>
+      <div className={`border-t p-3 space-y-1.5 ${themeClasses.border} flex-shrink-0`}>
         <button className={`flex items-center w-full px-3 py-1.5 ${themeClasses.surfaceHover} rounded transition-all duration-200 text-xs font-light`}>
           <Search className={`w-3 h-3 ${themeClasses.textSecondary} mr-2`} />
           <span className={themeClasses.text}>Search Files</span>
@@ -461,7 +525,7 @@ const Sidebar: React.FC<SidebarProps> = ({
       </div>
 
       {/* Bottom Actions */}
-      <div className={`border-t p-3 ${themeClasses.border}`}>
+      <div className={`border-t p-3 ${themeClasses.border} flex-shrink-0`}>
         <button
           onClick={handleLogoClick}
           className={`flex items-center px-3 py-2 ${themeClasses.surfaceHover} rounded-full transition-all duration-200 text-xs font-light w-full`}
