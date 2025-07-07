@@ -45,6 +45,8 @@ interface SidebarProps {
   onFileSelect?: (fileName: string) => void;
   showNewFileInput?: boolean;
   onNewFileInputChange?: (show: boolean) => void;
+  currentFolder?: string;
+  onFolderChange?: (folderName: string) => void;
 }
 
 const Sidebar: React.FC<SidebarProps> = ({ 
@@ -57,12 +59,16 @@ const Sidebar: React.FC<SidebarProps> = ({
   openTabs = [],
   onFileSelect,
   showNewFileInput: externalShowNewFileInput = false,
-  onNewFileInputChange
+  onNewFileInputChange,
+  currentFolder = 'My Project',
+  onFolderChange
 }) => {
   const [explorerExpanded, setExplorerExpanded] = useState(true);
   const [openEditorsExpanded, setOpenEditorsExpanded] = useState(true);
   const [internalShowNewFileInput, setInternalShowNewFileInput] = useState(false);
+  const [showNewFolderInput, setShowNewFolderInput] = useState(false);
   const [newFileName, setNewFileName] = useState('');
+  const [newFolderName, setNewFolderName] = useState('');
   const [userFiles, setUserFiles] = useState<FileItem[]>([
     {
       id: '1',
@@ -84,6 +90,7 @@ const Sidebar: React.FC<SidebarProps> = ({
     }
   ]);
   const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set());
+  const [activeFileInFolder, setActiveFileInFolder] = useState<string | null>(null);
   
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -94,10 +101,10 @@ const Sidebar: React.FC<SidebarProps> = ({
 
   // Auto-expand explorer when new file input is shown
   useEffect(() => {
-    if (showNewFileInput) {
+    if (showNewFileInput || showNewFolderInput) {
       setExplorerExpanded(true);
     }
-  }, [showNewFileInput]);
+  }, [showNewFileInput, showNewFolderInput]);
 
   const handleLogoClick = () => {
     navigate('/');
@@ -164,35 +171,75 @@ const Sidebar: React.FC<SidebarProps> = ({
     }
   };
 
-  const handleCreateNewFile = () => {
+  const handleCreateNewFile = (parentId?: string) => {
     setShowNewFileInput(true);
     setNewFileName('');
-    setExplorerExpanded(true); // Ensure explorer is expanded
+    setActiveFileInFolder(parentId || null);
+    setExplorerExpanded(true);
+  };
+
+  const handleCreateNewFolder = () => {
+    setShowNewFolderInput(true);
+    setNewFolderName('');
+    setExplorerExpanded(true);
   };
 
   const handleNewFileSubmit = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
       e.preventDefault();
       if (newFileName.trim()) {
-        createNewFile(newFileName.trim());
+        createNewFile(newFileName.trim(), activeFileInFolder);
         setShowNewFileInput(false);
         setNewFileName('');
+        setActiveFileInFolder(null);
       }
     } else if (e.key === 'Escape') {
       setShowNewFileInput(false);
       setNewFileName('');
+      setActiveFileInFolder(null);
     }
   };
 
-  const createNewFile = (fileName: string) => {
+  const handleNewFolderSubmit = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      if (newFolderName.trim()) {
+        createNewFolder(newFolderName.trim());
+        setShowNewFolderInput(false);
+        setNewFolderName('');
+      }
+    } else if (e.key === 'Escape') {
+      setShowNewFolderInput(false);
+      setNewFolderName('');
+    }
+  };
+
+  const createNewFile = (fileName: string, parentId?: string) => {
     const newFile: FileItem = {
       id: Date.now().toString(),
       name: fileName,
       type: 'file',
-      icon: getFileIcon(fileName)
+      icon: getFileIcon(fileName),
+      parentId: parentId
     };
     
-    setUserFiles(prev => [...prev, newFile]);
+    if (parentId) {
+      // Add file to specific folder
+      setUserFiles(prev => prev.map(item => {
+        if (item.id === parentId && item.type === 'folder') {
+          return {
+            ...item,
+            children: [...(item.children || []), newFile]
+          };
+        }
+        return item;
+      }));
+      // Expand the parent folder
+      setExpandedFolders(prev => new Set([...prev, parentId]));
+    } else {
+      // Add file to root
+      setUserFiles(prev => [...prev, newFile]);
+    }
     
     // Select the new file if callback is provided
     if (onFileSelect) {
@@ -210,6 +257,9 @@ const Sidebar: React.FC<SidebarProps> = ({
     };
     
     setUserFiles(prev => [...prev, newFolder]);
+    
+    // Auto-expand the new folder
+    setExpandedFolders(prev => new Set([...prev, newFolder.id]));
   };
 
   const toggleFolder = (folderId: string) => {
@@ -268,7 +318,7 @@ const Sidebar: React.FC<SidebarProps> = ({
               <button
                 onClick={(e) => {
                   e.stopPropagation();
-                  // Add functionality to create file in folder
+                  handleCreateNewFile(item.id);
                 }}
                 className={`opacity-0 group-hover:opacity-100 p-0.5 ${themeClasses.surfaceHover} rounded transition-all duration-200 ml-1`}
                 title="Add file to folder"
@@ -289,6 +339,20 @@ const Sidebar: React.FC<SidebarProps> = ({
         </div>
         {item.type === 'folder' && expandedFolders.has(item.id) && item.children && (
           <div>
+            {/* Show new file input inside folder if active */}
+            {showNewFileInput && activeFileInFolder === item.id && (
+              <div style={{ paddingLeft: `${20 + level * 12}px` }} className="px-2 py-1">
+                <input
+                  type="text"
+                  value={newFileName}
+                  onChange={(e) => setNewFileName(e.target.value)}
+                  onKeyDown={handleNewFileSubmit}
+                  placeholder="Enter file name..."
+                  className={`w-full px-2 py-1 text-xs rounded border ${themeClasses.input} ${themeClasses.border} focus:outline-none focus:ring-1 focus:ring-blue-500`}
+                  autoFocus
+                />
+              </div>
+            )}
             {renderFileTree(item.children, level + 1)}
           </div>
         )}
@@ -483,7 +547,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                 <ChevronRight className={`w-3 h-3 ${themeClasses.textSecondary} mr-1.5`} />
               )}
               <span className={`text-xs font-medium ${themeClasses.textSecondary} uppercase tracking-wider`}>
-                Project Files
+                {currentFolder}
               </span>
             </div>
             <div className="flex items-center space-x-2">
@@ -506,8 +570,8 @@ const Sidebar: React.FC<SidebarProps> = ({
         
         {explorerExpanded && (
           <div className="pb-4">
-            {/* New File Input */}
-            {showNewFileInput && (
+            {/* New File Input (root level) */}
+            {showNewFileInput && !activeFileInFolder && (
               <div className="px-4 py-2 border-b border-gray-200 dark:border-gray-700">
                 <input
                   type="text"
@@ -523,6 +587,24 @@ const Sidebar: React.FC<SidebarProps> = ({
                 </div>
               </div>
             )}
+
+            {/* New Folder Input */}
+            {showNewFolderInput && (
+              <div className="px-4 py-2 border-b border-gray-200 dark:border-gray-700">
+                <input
+                  type="text"
+                  value={newFolderName}
+                  onChange={(e) => setNewFolderName(e.target.value)}
+                  onKeyDown={handleNewFolderSubmit}
+                  placeholder="Enter folder name..."
+                  className={`w-full px-2 py-1 text-xs rounded border ${themeClasses.input} ${themeClasses.border} focus:outline-none focus:ring-1 focus:ring-blue-500`}
+                  autoFocus
+                />
+                <div className={`text-xs ${themeClasses.textSecondary} mt-1`}>
+                  Press Enter to create folder, Esc to cancel
+                </div>
+              </div>
+            )}
             
             {/* User Files */}
             {userFiles.length > 0 ? (
@@ -532,7 +614,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                 <FileText className={`w-8 h-8 ${themeClasses.textSecondary} mx-auto mb-2 opacity-50`} />
                 <p className={`text-xs ${themeClasses.textSecondary} mb-2`}>No files yet</p>
                 <button
-                  onClick={handleCreateNewFile}
+                  onClick={() => handleCreateNewFile()}
                   className={`text-xs ${themeClasses.accent} hover:underline`}
                 >
                   Create your first file
