@@ -22,6 +22,7 @@ interface ProjectHeaderProps {
   isDarkMode: boolean;
   projectId?: string;
   collaborators?: any[];
+  onNewFile: () => void;
 }
 
 const ProjectHeader: React.FC<ProjectHeaderProps> = ({ 

@@ -231,6 +231,7 @@ const Dashboard: React.FC<DashboardProps> = ({ projectId: propProjectId, collabo
           isDarkMode={isDarkMode}
           projectId={projectId}
           collaborators={collaborators}
+          onNewFile={handleNewFile}
         />
         
         <div className="flex-1 flex min-h-0">
