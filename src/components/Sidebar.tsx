@@ -47,6 +47,7 @@ interface SidebarProps {
   onNewFileInputChange?: (show: boolean) => void;
   currentFolder?: string;
   onFolderChange?: (folderName: string) => void;
+  onFileCreated?: (fileName: string, template?: string) => void;
 }
 
 const Sidebar: React.FC<SidebarProps> = ({ 
@@ -61,7 +62,8 @@ const Sidebar: React.FC<SidebarProps> = ({
   showNewFileInput: externalShowNewFileInput = false,
   onNewFileInputChange,
   currentFolder = 'My Project',
-  onFolderChange
+  onFolderChange,
+  onFileCreated
 }) => {
   const [explorerExpanded, setExplorerExpanded] = useState(true);
   const [openEditorsExpanded, setOpenEditorsExpanded] = useState(true);
@@ -215,6 +217,36 @@ const Sidebar: React.FC<SidebarProps> = ({
   };
 
   const createNewFile = (fileName: string, parentId?: string) => {
+    // Get file extension to determine template
+    const extension = fileName.split('.').pop()?.toLowerCase();
+    let template = '';
+    
+    switch (extension) {
+      case 'js':
+        template = `// ${fileName}\nconsole.log('Hello from ${fileName}!');`;
+        break;
+      case 'ts':
+        template = `// ${fileName}\ninterface Example {\n  message: string;\n}\n\nconst example: Example = {\n  message: 'Hello from ${fileName}!'\n};\n\nconsole.log(example.message);`;
+        break;
+      case 'tsx':
+        template = `import React from 'react';\n\ninterface Props {\n  // Define your props here\n}\n\nconst ${fileName.replace('.tsx', '')}: React.FC<Props> = () => {\n  return (\n    <div>\n      <h1>${fileName}</h1>\n    </div>\n  );\n};\n\nexport default ${fileName.replace('.tsx', '')};`;
+        break;
+      case 'py':
+        template = `# ${fileName}\nprint("Hello from ${fileName}!")`;
+        break;
+      case 'html':
+        template = `<!DOCTYPE html>\n<html lang="en">\n<head>\n    <meta charset="UTF-8">\n    <meta name="viewport" content="width=device-width, initial-scale=1.0">\n    <title>${fileName}</title>\n</head>\n<body>\n    <h1>Hello from ${fileName}!</h1>\n</body>\n</html>`;
+        break;
+      case 'css':
+        template = `/* ${fileName} */\nbody {\n  font-family: Arial, sans-serif;\n  margin: 0;\n  padding: 20px;\n}`;
+        break;
+      case 'json':
+        template = `{\n  "name": "${fileName.replace('.json', '')}",\n  "version": "1.0.0"\n}`;
+        break;
+      default:
+        template = `// ${fileName}\n// Your code here...`;
+    }
+    
     const newFile: FileItem = {
       id: Date.now().toString(),
       name: fileName,
@@ -245,6 +277,10 @@ const Sidebar: React.FC<SidebarProps> = ({
     if (onFileSelect) {
       onFileSelect(fileName);
     }
+    
+    if (onFileCreated) {
+      onFileCreated(fileName, template);
+    }
   };
 
   const createNewFolder = (folderName: string) => {
@@ -258,8 +294,34 @@ const Sidebar: React.FC<SidebarProps> = ({
     
     setUserFiles(prev => [...prev, newFolder]);
     
+    // Create a default file in the new folder
+    const defaultFileName = 'index.js';
+    const defaultFile: FileItem = {
+      id: (Date.now() + 1).toString(),
+      name: defaultFileName,
+      type: 'file',
+      icon: getFileIcon(defaultFileName),
+      parentId: newFolder.id
+    };
+    
+    // Add the default file to the folder
+    setUserFiles(prev => prev.map(item => 
+      item.id === newFolder.id 
+        ? { ...item, children: [defaultFile] }
+        : item
+    ));
+    
     // Auto-expand the new folder
     setExpandedFolders(prev => new Set([...prev, newFolder.id]));
+    
+    // Select the default file and notify parent
+    if (onFileSelect) {
+      onFileSelect(defaultFileName);
+    }
+    
+    if (onFileCreated) {
+      onFileCreated(defaultFileName, `// ${defaultFileName}\nconsole.log('Hello from ${defaultFileName}!');`);
+    }
   };
 
   const toggleFolder = (folderId: string) => {

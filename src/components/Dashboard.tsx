@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import Sidebar from './Sidebar';
 import CodeEditor from './CodeEditor';
 import ProjectHeader from './ProjectHeader';
@@ -88,7 +88,7 @@ const Dashboard: React.FC<DashboardProps> = ({ projectId: propProjectId, collabo
     setActiveTab(fileName);
   };
 
-  const handleFileCreated = (fileName: string) => {
+  const handleFileCreated = (fileName: string, template?: string) => {
     if (!userFiles.includes(fileName)) {
       setUserFiles([...userFiles, fileName]);
     }
@@ -203,6 +203,7 @@ const Dashboard: React.FC<DashboardProps> = ({ projectId: propProjectId, collabo
             onNewFileInputChange={setShowNewFileInput}
             currentFolder={currentFolder}
             onFolderChange={setCurrentFolder}
+            onFileCreated={handleFileCreated}
           />
         </div>
         

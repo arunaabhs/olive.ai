@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, File, FileText, Code, Database, Image, Settings } from 'lucide-react';
+import { X, File, FileText, Code, Database, Image, Settings, ChevronDown } from 'lucide-react';
 
 interface NewFileModalProps {
   isOpen: boolean;
@@ -12,6 +12,7 @@ interface NewFileModalProps {
 const NewFileModal: React.FC<NewFileModalProps> = ({ isOpen, onClose, onCreateFile, onFileCreated, isDarkMode = false }) => {
   const [fileName, setFileName] = useState('');
   const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null);
+  const [showTemplateDropdown, setShowTemplateDropdown] = useState(false);
 
   const themeClasses = isDarkMode ? {
     bg: 'bg-gray-900',
@@ -182,7 +183,7 @@ console.log('Hello from markdown!');
     if (!fileName.trim()) return;
 
     const template = templates.find(t => t.id === selectedTemplate);
-    const finalFileName = fileName.includes('.') ? fileName : fileName + (template?.extension || '.txt');
+    const finalFileName = fileName.includes('.') ? fileName : fileName + (template?.extension || '.js');
     
     onCreateFile(finalFileName, template?.template);
     
@@ -193,6 +194,7 @@ console.log('Hello from markdown!');
     
     setFileName('');
     setSelectedTemplate(null);
+    setShowTemplateDropdown(false);
     onClose();
   };
 
@@ -200,6 +202,7 @@ console.log('Hello from markdown!');
     setSelectedTemplate(templateId);
     const template = templates.find(t => t.id === templateId);
     if (template && !fileName.includes('.')) {
+      // Only update filename if it doesn't already have an extension
       setFileName(fileName.replace(/\.[^/.]+$/, '') + template.extension);
     }
   };
@@ -231,13 +234,91 @@ console.log('Hello from markdown!');
               placeholder="Enter file name..."
               className={`w-full px-4 py-3 rounded-lg border ${themeClasses.input} focus:ring-2 focus:ring-blue-500 focus:border-blue-500`}
               autoFocus
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  handleCreate();
+                }
+              }}
             />
           </div>
 
           <div className="mb-6">
             <label className={`block text-sm font-medium ${themeClasses.text} mb-3`}>
-              Choose Template (Optional)
+              File Type
             </label>
+            
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => setShowTemplateDropdown(!showTemplateDropdown)}
+                className={`w-full px-4 py-3 rounded-lg border ${themeClasses.input} focus:ring-2 focus:ring-blue-500 focus:border-blue-500 flex items-center justify-between`}
+              >
+                <span className={selectedTemplate ? themeClasses.text : themeClasses.textSecondary}>
+                  {selectedTemplate 
+                    ? templates.find(t => t.id === selectedTemplate)?.name 
+                    : 'Select file type...'
+                  }
+                </span>
+                <ChevronDown className={`w-4 h-4 transition-transform ${showTemplateDropdown ? 'rotate-180' : ''}`} />
+              </button>
+              
+              {showTemplateDropdown && (
+                <div className={`absolute top-full left-0 right-0 mt-1 ${themeClasses.dropdown} border rounded-lg shadow-lg z-50 max-h-60 overflow-y-auto`}>
+                  {templates.map((template) => {
+                    const Icon = template.icon;
+                    return (
+                      <button
+                        key={template.id}
+                        type="button"
+                        onClick={() => {
+                          handleTemplateSelect(template.id);
+                          setShowTemplateDropdown(false);
+                        }}
+                        className={`w-full p-3 text-left hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors flex items-center space-x-3 ${
+                          selectedTemplate === template.id ? 'bg-blue-50 dark:bg-blue-900/20' : ''
+                        }`}
+                      >
+                        <Icon className={`w-4 h-4 ${selectedTemplate === template.id ? 'text-blue-600' : themeClasses.textSecondary}`} />
+                        <div>
+                          <div className={`font-medium ${themeClasses.text}`}>{template.name}</div>
+                          <div className={`text-sm ${themeClasses.textSecondary}`}>{template.extension}</div>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+            
+            {selectedTemplate && (
+              <div className={`mt-3 p-3 rounded-lg ${themeClasses.surface} border ${themeClasses.border}`}>
+                <div className={`text-sm ${themeClasses.text} font-medium mb-1`}>
+                  {templates.find(t => t.id === selectedTemplate)?.name}
+                </div>
+                <div className={`text-xs ${themeClasses.textSecondary}`}>
+                  Creates a {templates.find(t => t.id === selectedTemplate)?.extension} file with starter template
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Preview of selected template */}
+          {selectedTemplate && (
+            <div className="mb-6">
+              <label className={`block text-sm font-medium ${themeClasses.text} mb-2`}>
+                Template Preview
+              </label>
+              <div className={`p-3 rounded-lg ${themeClasses.surface} border ${themeClasses.border} max-h-32 overflow-y-auto`}>
+                <pre className={`text-xs ${themeClasses.textSecondary} font-mono whitespace-pre-wrap`}>
+                  {templates.find(t => t.id === selectedTemplate)?.template.slice(0, 200)}
+                  {(templates.find(t => t.id === selectedTemplate)?.template.length || 0) > 200 ? '...' : ''}
+                </pre>
+              </div>
+            </div>
+          )}
+
+          {/* Legacy grid view - hidden but kept for reference */}
+          <div className="hidden">
             <div className="grid grid-cols-2 gap-3">
               {templates.map((template) => {
                 const Icon = template.icon;
@@ -280,6 +361,14 @@ console.log('Hello from markdown!');
             </button>
           </div>
         </div>
+        
+        {/* Click outside to close dropdown */}
+        {showTemplateDropdown && (
+          <div 
+            className="fixed inset-0 z-40" 
+            onClick={() => setShowTemplateDropdown(false)}
+          />
+        )}
       </div>
     </div>
   );
