@@ -38,7 +38,8 @@ const ProjectHeader: React.FC<ProjectHeaderProps> = ({
   onToggleDarkMode,
   isDarkMode,
   projectId = 'default-project',
-  collaborators = []
+  collaborators = [],
+  onNewFile = () => {}
 }) => {
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
   const [showNewFileModal, setShowNewFileModal] = useState(false);
