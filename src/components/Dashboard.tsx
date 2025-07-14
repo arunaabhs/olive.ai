@@ -4,6 +4,7 @@ import CodeEditor from './CodeEditor';
 import ProjectHeader from './ProjectHeader';
 import CopilotSidebar from './CopilotSidebar';
 import Terminal from './Terminal';
+import NewFileModal from './modals/NewFileModal';
 import { useAuth } from '../contexts/AuthContext';
 
 interface DashboardProps {
