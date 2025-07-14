@@ -132,31 +132,71 @@ if __name__ == "__main__":
 `
     },
     {
-      id: 'css',
-      name: 'CSS File',
-      extension: '.css',
-      icon: '🎨',
-      template: `/* New CSS file */
-
-body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  margin: 0;
-  padding: 20px;
-  line-height: 1.6;
+      id: 'java',
+      name: 'Java File',
+      extension: '.java',
+      icon: '☕',
+      template: `public class NewFile {
+    public static void main(String[] args) {
+        System.out.println("Hello, Java!");
+        // Your code here...
+    }
 }
-
-/* Your styles here... */
 `
     },
     {
-      id: 'json',
-      name: 'JSON File',
-      extension: '.json',
-      icon: '📦',
-      template: `{
-  "name": "new-file",
-  "version": "1.0.0",
-  "description": "A new JSON file"
+      id: 'c',
+      name: 'C File',
+      extension: '.c',
+      icon: '⚙️',
+      template: `#include <stdio.h>
+
+int main() {
+    printf("Hello, C!\\n");
+    // Your code here...
+    return 0;
+}
+`
+    },
+    {
+      id: 'cpp',
+      name: 'C++ File',
+      extension: '.cpp',
+      icon: '⚡',
+      template: `#include <iostream>
+
+int main() {
+    std::cout << "Hello, C++!" << std::endl;
+    // Your code here...
+    return 0;
+}
+`
+    },
+    {
+      id: 'php',
+      name: 'PHP File',
+      extension: '.php',
+      icon: '🐘',
+      template: `<?php
+
+echo "Hello, PHP!";
+// Your code here...
+
+?>
+`
+    },
+    {
+      id: 'csharp',
+      name: 'C# File',
+      extension: '.cs',
+      icon: '🔷',
+      template: `using System;
+
+class Program {
+    static void Main() {
+        Console.WriteLine("Hello, C#!");
+        // Your code here...
+    }
 }
 `
     },
