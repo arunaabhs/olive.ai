@@ -4,12 +4,11 @@ import { X, File, FileText, Code, Database, Image, Settings, ChevronDown } from 
 interface NewFileModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onCreateFile: (name: string, template?: string) => void;
-  onFileCreated?: (fileName: string) => void;
+  onCreateFile: (fileName: string, template?: string) => void;
   isDarkMode?: boolean;
 }
 
-const NewFileModal: React.FC<NewFileModalProps> = ({ isOpen, onClose, onCreateFile, onFileCreated, isDarkMode = false }) => {
+const NewFileModal: React.FC<NewFileModalProps> = ({ isOpen, onClose, onCreateFile, isDarkMode = false }) => {
   const [fileName, setFileName] = useState('');
   const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null);
   const [showTemplateDropdown, setShowTemplateDropdown] = useState(false);
@@ -195,12 +194,7 @@ console.log('Hello from markdown!');
     const template = templates.find(t => t.id === selectedTemplate);
     const finalFileName = fileName.includes('.') ? fileName : fileName + (template?.extension || '.js');
     
-    onCreateFile(finalFileName, template?.template);
-    
-    // Notify parent component about the new file
-    if (onFileCreated) {
-      onFileCreated(finalFileName);
-    }
+    onCreateFile(finalFileName, template?.template || '');
     
     setFileName('');
     setSelectedTemplate(null);

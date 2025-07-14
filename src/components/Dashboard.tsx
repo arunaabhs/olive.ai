@@ -24,8 +24,23 @@ const Dashboard: React.FC<DashboardProps> = ({ projectId: propProjectId, collabo
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [isResizing, setIsResizing] = useState<'sidebar' | 'copilot' | null>(null);
   const [userFiles, setUserFiles] = useState<string[]>(['sample.txt']);
-  const [showNewFileInput, setShowNewFileInput] = useState(false);
+  const [showNewFileModal, setShowNewFileModal] = useState(false);
   const [currentFolder, setCurrentFolder] = useState('My Project');
+  const [fileContents, setFileContents] = useState<Record<string, string>>({
+    'sample.txt': `Welcome to Olive Code Editor!
+
+This is a sample text file to get you started.
+
+You can:
+- Create new files and folders
+- Write code in multiple languages
+- Use the AI-powered copilot for assistance
+- Collaborate with others in real-time
+
+Start by creating a new file or editing this one!
+
+Happy coding! 🚀`
+  });
   
   const editorRef = useRef<any>(null);
   const { user } = useAuth();
@@ -69,35 +84,71 @@ const Dashboard: React.FC<DashboardProps> = ({ projectId: propProjectId, collabo
   };
 
   const handleNewFile = () => {
-    // Trigger the inline file creation in sidebar
-    setShowNewFileInput(true);
+    setShowNewFileModal(true);
   };
+
   const handleFileSelect = (fileName: string) => {
+    if (!openTabs.includes(fileName)) {
+      setOpenTabs([...openTabs, fileName]);
+    }
+    setActiveTab(fileName);
+    
+    // Update editor content when switching files
+    if (editorRef.current && fileContents[fileName]) {
+      editorRef.current.setValue(fileContents[fileName]);
+    }
+  };
+
+  const handleFileCreated = (fileName: string, template?: string) => {
+    // Store the file content
+    if (template) {
+      setFileContents(prev => ({
+        ...prev,
+        [fileName]: template
+      }));
+    }
+    
+    // Add to user files list
+    if (!userFiles.includes(fileName)) {
+      setUserFiles([...userFiles, fileName]);
+    }
+    
+    // Open the file in a new tab
+    if (!openTabs.includes(fileName)) {
+      setOpenTabs([...openTabs, fileName]);
+    }
+    setActiveTab(fileName);
+    
+    // Set the content in the editor
+    if (editorRef.current && template) {
+      editorRef.current.setValue(template);
+    }
+  };
+
+  const handleCodeChange = (code: string) => {
+    setCurrentCode(code);
+    // Save the content for the active file
+    setFileContents(prev => ({
+      ...prev,
+      [activeTab]: code
+    }));
+  };
+
   // Set up global function for folder creation
   useEffect(() => {
     (window as any).createNewFolder = () => {
       // This will be handled by the sidebar component
-      setShowNewFileInput(false); // Close file input if open
+      setShowNewFileModal(false); // Close file modal if open
       // The sidebar will handle showing the folder input
     };
   }, []);
 
-    if (!openTabs.includes(fileName)) {
-      setOpenTabs([...openTabs, fileName]);
+  // Load file content when switching tabs
+  useEffect(() => {
+    if (editorRef.current && fileContents[activeTab]) {
+      editorRef.current.setValue(fileContents[activeTab]);
     }
-    setActiveTab(fileName);
-  };
-
-  const handleFileCreated = (fileName: string, template?: string) => {
-    if (!userFiles.includes(fileName)) {
-      setUserFiles([...userFiles, fileName]);
-    }
-    if (!openTabs.includes(fileName)) {
-      setOpenTabs([...openTabs, fileName]);
-    }
-    setActiveTab(fileName);
-  };
-
+  }, [activeTab]);
 
   const handleRunCode = (code: string, language: string) => {
     if (!terminalOpen) {
@@ -199,8 +250,6 @@ const Dashboard: React.FC<DashboardProps> = ({ projectId: propProjectId, collabo
             collaborators={collaborators}
             openTabs={openTabs}
             onFileSelect={handleFileSelect}
-            showNewFileInput={showNewFileInput}
-            onNewFileInputChange={setShowNewFileInput}
             currentFolder={currentFolder}
             onFolderChange={setCurrentFolder}
             onFileCreated={handleFileCreated}
@@ -240,7 +289,7 @@ const Dashboard: React.FC<DashboardProps> = ({ projectId: propProjectId, collabo
           <div className={`flex-1 min-w-0 ${themeClasses.surface}`}>
             <CodeEditor 
               ref={editorRef}
-              onCodeChange={setCurrentCode}
+              onCodeChange={handleCodeChange}
               activeFile={activeTab}
               onRunCode={handleRunCode}
               isDarkMode={isDarkMode}
@@ -278,6 +327,14 @@ const Dashboard: React.FC<DashboardProps> = ({ projectId: propProjectId, collabo
         onToggleSize={() => setTerminalMinimized(!terminalMinimized)}
         isMinimized={terminalMinimized}
         onRunCode={handleRunCode}
+        isDarkMode={isDarkMode}
+      />
+
+      {/* New File Modal */}
+      <NewFileModal
+        isOpen={showNewFileModal}
+        onClose={() => setShowNewFileModal(false)}
+        onCreateFile={handleFileCreated}
         isDarkMode={isDarkMode}
       />
     </div>

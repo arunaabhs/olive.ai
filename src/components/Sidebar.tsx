@@ -43,8 +43,6 @@ interface SidebarProps {
   collaborators?: any[];
   openTabs?: string[];
   onFileSelect?: (fileName: string) => void;
-  showNewFileInput?: boolean;
-  onNewFileInputChange?: (show: boolean) => void;
   currentFolder?: string;
   onFolderChange?: (folderName: string) => void;
   onFileCreated?: (fileName: string, template?: string) => void;
@@ -59,15 +57,13 @@ const Sidebar: React.FC<SidebarProps> = ({
   collaborators = [],
   openTabs = [],
   onFileSelect,
-  showNewFileInput: externalShowNewFileInput = false,
-  onNewFileInputChange,
   currentFolder = 'My Project',
   onFolderChange,
   onFileCreated
 }) => {
   const [explorerExpanded, setExplorerExpanded] = useState(true);
   const [openEditorsExpanded, setOpenEditorsExpanded] = useState(true);
-  const [internalShowNewFileInput, setInternalShowNewFileInput] = useState(false);
+  const [showNewFileInput, setShowNewFileInput] = useState(false);
   const [showNewFolderInput, setShowNewFolderInput] = useState(false);
   const [newFileName, setNewFileName] = useState('');
   const [newFolderName, setNewFolderName] = useState('');
@@ -86,10 +82,6 @@ const Sidebar: React.FC<SidebarProps> = ({
   
   const navigate = useNavigate();
   const { user } = useAuth();
-
-  // Use external state if provided, otherwise use internal state
-  const showNewFileInput = externalShowNewFileInput || internalShowNewFileInput;
-  const setShowNewFileInput = onNewFileInputChange || setInternalShowNewFileInput;
 
   // Auto-expand explorer when new file input is shown
   useEffect(() => {
@@ -164,10 +156,16 @@ const Sidebar: React.FC<SidebarProps> = ({
   };
 
   const handleCreateNewFile = (parentId?: string) => {
-    setShowNewFileInput(true);
-    setNewFileName('');
-    setActiveFileInFolder(parentId || null);
-    setExplorerExpanded(true);
+    // For folder-specific file creation, use inline input
+    if (parentId) {
+      setShowNewFileInput(true);
+      setNewFileName('');
+      setActiveFileInFolder(parentId || null);
+      setExplorerExpanded(true);
+    } else {
+      // For root level, trigger the main new file function
+      onNewFile();
+    }
   };
 
   const handleCreateNewFolder = () => {
