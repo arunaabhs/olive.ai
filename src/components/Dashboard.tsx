@@ -19,7 +19,6 @@ const Dashboard: React.FC<DashboardProps> = ({ projectId: propProjectId, collabo
   const [terminalOpen, setTerminalOpen] = useState(false);
   const [terminalMinimized, setTerminalMinimized] = useState(false);
   const [currentCode, setCurrentCode] = useState('');
-  const [activeTab, setActiveTab] = useState('hello.js');
   const [activeTab, setActiveTab] = useState('sample.txt');
   const [openTabs, setOpenTabs] = useState(['sample.txt']);
   const [isDarkMode, setIsDarkMode] = useState(false);
