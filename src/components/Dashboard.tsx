@@ -20,10 +20,11 @@ const Dashboard: React.FC<DashboardProps> = ({ projectId: propProjectId, collabo
   const [terminalMinimized, setTerminalMinimized] = useState(false);
   const [currentCode, setCurrentCode] = useState('');
   const [activeTab, setActiveTab] = useState('hello.js');
-  const [openTabs, setOpenTabs] = useState(['hello.js', 'example.py', 'sample.html']);
+  const [activeTab, setActiveTab] = useState('sample.txt');
+  const [openTabs, setOpenTabs] = useState(['sample.txt']);
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [isResizing, setIsResizing] = useState<'sidebar' | 'copilot' | null>(null);
-  const [userFiles, setUserFiles] = useState<string[]>(['hello.js', 'example.py', 'sample.html']);
+  const [userFiles, setUserFiles] = useState<string[]>(['sample.txt']);
   const [showNewFileInput, setShowNewFileInput] = useState(false);
   const [currentFolder, setCurrentFolder] = useState('My Project');
   

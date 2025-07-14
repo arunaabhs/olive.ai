@@ -76,21 +76,9 @@ const Sidebar: React.FC<SidebarProps> = ({
   const [userFiles, setUserFiles] = useState<FileItem[]>([
     {
       id: '1',
-      name: 'hello.js',
+      name: 'sample.txt',
       type: 'file',
-      icon: '📄'
-    },
-    {
-      id: '2',
-      name: 'example.py',
-      type: 'file',
-      icon: '🐍'
-    },
-    {
-      id: '3',
-      name: 'sample.html',
-      type: 'file',
-      icon: '🌐'
+      icon: '📝'
     }
   ]);
   const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set());

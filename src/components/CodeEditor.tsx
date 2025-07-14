@@ -86,6 +86,8 @@ const CodeEditor = forwardRef<CodeEditorRef, CodeEditorProps>(({
         return 'rust';
       case 'sql':
         return 'sql';
+      case 'txt':
+        return 'plaintext';
       default:
         return 'javascript';
     }
@@ -96,193 +98,15 @@ const CodeEditor = forwardRef<CodeEditorRef, CodeEditorProps>(({
     
     switch (language) {
       case 'javascript':
-        if (fileName === 'hello.js') {
-          return `// Welcome to Olive Code Editor!
-// This is a collaborative coding environment
-
-console.log("Hello, World!");
-
-// Try some interactive examples:
-const numbers = [1, 2, 3, 4, 5];
-const doubled = numbers.map(n => n * 2);
-console.log("Doubled numbers:", doubled);
-
-// Function example
-function fibonacci(n) {
-  if (n <= 1) return n;
-  return fibonacci(n - 1) + fibonacci(n - 2);
-}
-
-console.log("Fibonacci(10):", fibonacci(10));
-
-// Modern JavaScript features
-const asyncExample = async () => {
-  const data = await Promise.resolve("Async data loaded!");
-  console.log(data);
-};
-
-asyncExample();`;
-        }
         return `// New JavaScript file
 console.log("Hello from ${fileName}!");`;
         
       case 'python':
-        if (fileName === 'example.py') {
-          return `# Welcome to Python in Olive!
-# Collaborative Python coding made easy
-
-print("Hello, Python World!")
-
-# List comprehension example
-numbers = [1, 2, 3, 4, 5]
-squared = [x**2 for x in numbers]
-print(f"Squared numbers: {squared}")
-
-# Function example
-def factorial(n):
-    if n <= 1:
-        return 1
-    return n * factorial(n - 1)
-
-print(f"Factorial of 5: {factorial(5)}")
-
-# Class example
-class Calculator:
-    def __init__(self):
-        self.history = []
-    
-    def add(self, a, b):
-        result = a + b
-        self.history.append(f"{a} + {b} = {result}")
-        return result
-
-calc = Calculator()
-result = calc.add(10, 5)
-print(f"Calculator result: {result}")
-print(f"History: {calc.history}")`;
-        }
         return `# New Python file
 print(f"Hello from {fileName}!")`;
         
       case 'html':
-        if (fileName === 'sample.html') {
-          return `<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Olive Collaborative HTML</title>
-    <style>
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 20px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            min-height: 100vh;
-        }
-        .container {
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-            border-radius: 20px;
-            padding: 30px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-        }
-        h1 {
-            text-align: center;
-            margin-bottom: 30px;
-            font-size: 2.5em;
-        }
-        .feature {
-            margin: 20px 0;
-            padding: 15px;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 10px;
-            border-left: 4px solid #4CAF50;
-        }
-        button {
-            background: #4CAF50;
-            color: white;
-            border: none;
-            padding: 12px 24px;
-            border-radius: 25px;
-            cursor: pointer;
-            font-size: 16px;
-            transition: all 0.3s ease;
-        }
-        button:hover {
-            background: #45a049;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-        }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <h1>🌟 Welcome to Olive Collaborative Editor</h1>
-        
-        <div class="feature">
-            <h3>🚀 Real-time Collaboration</h3>
-            <p>Code together with your team in real-time. See changes instantly as others type!</p>
-        </div>
-        
-        <div class="feature">
-            <h3>💻 Multi-language Support</h3>
-            <p>Write JavaScript, Python, HTML, CSS, and more with syntax highlighting and IntelliSense.</p>
-        </div>
-        
-        <div class="feature">
-            <h3>🤖 AI-Powered Assistant</h3>
-            <p>Get help from our AI copilot for code suggestions, debugging, and explanations.</p>
-        </div>
-        
-        <div class="feature">
-            <h3>⚡ Instant Execution</h3>
-            <p>Run your code instantly in the integrated terminal and see results immediately.</p>
-        </div>
-        
-        <div style="text-align: center; margin-top: 30px;">
-            <button onclick="showAlert()">Try Interactive Demo</button>
-        </div>
-    </div>
 
-    <script>
-        function showAlert() {
-            alert('🎉 Welcome to collaborative coding! This HTML file is being edited in real-time.');
-            
-            // Add some dynamic content
-            const container = document.querySelector('.container');
-            const newFeature = document.createElement('div');
-            newFeature.className = 'feature';
-            newFeature.innerHTML = \`
-                <h3>✨ Dynamic Content Added!</h3>
-                <p>This content was added dynamically when you clicked the button. Time: \${new Date().toLocaleTimeString()}</p>
-            \`;
-            container.appendChild(newFeature);
-        }
-        
-        // Add some interactive behavior
-        document.addEventListener('DOMContentLoaded', function() {
-            console.log('🌟 Olive HTML Demo loaded successfully!');
-            
-            // Animate features on load
-            const features = document.querySelectorAll('.feature');
-            features.forEach((feature, index) => {
-                feature.style.opacity = '0';
-                feature.style.transform = 'translateY(20px)';
-                
-                setTimeout(() => {
-                    feature.style.transition = 'all 0.6s ease';
-                    feature.style.opacity = '1';
-                    feature.style.transform = 'translateY(0)';
-                }, index * 200);
-            });
-        });
-    </script>
-</body>
-</html>`;
-        }
         return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -294,6 +118,26 @@ print(f"Hello from {fileName}!")`;
     <h1>Hello from ${fileName}!</h1>
 </body>
 </html>`;
+        
+      case 'txt':
+        if (fileName === 'sample.txt') {
+          return `Welcome to Olive Code Editor!
+
+This is a sample text file to get you started.
+
+You can:
+- Create new files and folders
+- Write code in multiple languages
+- Use the AI-powered copilot for assistance
+- Collaborate with others in real-time
+
+Start by creating a new file or editing this one!
+
+Happy coding! 🚀`;
+        }
+        return `This is a new text file.
+
+Start writing your content here...`;
         
       default:
         return `// New ${language} file\n// Start coding here...`;
