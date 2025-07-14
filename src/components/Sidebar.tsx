@@ -71,6 +71,8 @@ const Sidebar: React.FC<SidebarProps> = ({
   const [showNewFolderInput, setShowNewFolderInput] = useState(false);
   const [newFileName, setNewFileName] = useState('');
   const [newFolderName, setNewFolderName] = useState('');
+  const [isEditingProjectName, setIsEditingProjectName] = useState(false);
+  const [editingProjectName, setEditingProjectName] = useState('');
   const [userFiles, setUserFiles] = useState<FileItem[]>([
     {
       id: '1',
@@ -213,6 +215,27 @@ const Sidebar: React.FC<SidebarProps> = ({
     } else if (e.key === 'Escape') {
       setShowNewFolderInput(false);
       setNewFolderName('');
+    }
+  };
+
+  const handleProjectNameEdit = () => {
+    setIsEditingProjectName(true);
+    setEditingProjectName(currentFolder);
+  };
+
+  const handleProjectNameSubmit = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      if (editingProjectName.trim()) {
+        if (onFolderChange) {
+          onFolderChange(editingProjectName.trim());
+        }
+      }
+      setIsEditingProjectName(false);
+      setEditingProjectName('');
+    } else if (e.key === 'Escape') {
+      setIsEditingProjectName(false);
+      setEditingProjectName('');
     }
   };
 
@@ -600,17 +623,40 @@ const Sidebar: React.FC<SidebarProps> = ({
         <div className={`border-b ${themeClasses.border}`}>
           <div 
             className={`flex items-center justify-between p-3 ${themeClasses.surfaceHover} cursor-pointer transition-all duration-200`}
-            onClick={() => setExplorerExpanded(!explorerExpanded)}
           >
             <div className="flex items-center">
-              {explorerExpanded ? (
-                <ChevronDown className={`w-3 h-3 ${themeClasses.textSecondary} mr-1.5`} />
+              <button
+                onClick={() => setExplorerExpanded(!explorerExpanded)}
+                className="flex items-center"
+              >
+                {explorerExpanded ? (
+                  <ChevronDown className={`w-3 h-3 ${themeClasses.textSecondary} mr-1.5`} />
+                ) : (
+                  <ChevronRight className={`w-3 h-3 ${themeClasses.textSecondary} mr-1.5`} />
+                )}
+              </button>
+              {isEditingProjectName ? (
+                <input
+                  type="text"
+                  value={editingProjectName}
+                  onChange={(e) => setEditingProjectName(e.target.value)}
+                  onKeyDown={handleProjectNameSubmit}
+                  onBlur={() => {
+                    setIsEditingProjectName(false);
+                    setEditingProjectName('');
+                  }}
+                  className={`text-xs font-medium uppercase tracking-wider bg-transparent border-none outline-none focus:ring-1 focus:ring-blue-500 rounded px-1 ${themeClasses.text}`}
+                  autoFocus
+                />
               ) : (
-                <ChevronRight className={`w-3 h-3 ${themeClasses.textSecondary} mr-1.5`} />
+                <button
+                  onClick={handleProjectNameEdit}
+                  className={`text-xs font-medium ${themeClasses.textSecondary} uppercase tracking-wider hover:${themeClasses.text} transition-colors`}
+                  title="Click to rename project"
+                >
+                  {currentFolder}
+                </button>
               )}
-              <span className={`text-xs font-medium ${themeClasses.textSecondary} uppercase tracking-wider`}>
-                {currentFolder}
-              </span>
             </div>
             <div className="flex items-center space-x-2">
               <span className={`text-xs ${themeClasses.textSecondary} ${themeClasses.surface} px-1.5 py-0.5 rounded-full`}>
