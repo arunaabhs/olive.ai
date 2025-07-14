@@ -281,17 +281,6 @@ Start writing your content here...`;
 
   const toggleCollaboration = () => {
     setIsCollaborationEnabled(!isCollaborationEnabled);
-    
-    if (isCollaborationEnabled) {
-      // Disable collaboration
-      if (binding) binding.destroy();
-      if (wsProvider) wsProvider.destroy();
-      if (ydoc) ydoc.destroy();
-      setBinding(null);
-      setWsProvider(null);
-      setYdoc(null);
-      setCollaboratorCursors([]);
-    }
   };
 
   const language = getLanguageFromFile(activeFile);
