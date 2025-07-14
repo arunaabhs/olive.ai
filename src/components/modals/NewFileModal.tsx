@@ -32,6 +32,16 @@ const NewFileModal: React.FC<NewFileModalProps> = ({ isOpen, onClose, onCreateFi
 
   const templates = [
     {
+      id: 'text',
+      name: 'Text File',
+      extension: '.txt',
+      icon: FileText,
+      template: `This is a new text file.
+
+Start writing your content here...
+`
+    },
+    {
       id: 'javascript',
       name: 'JavaScript File',
       extension: '.js',
