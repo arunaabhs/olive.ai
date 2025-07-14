@@ -687,29 +687,6 @@ const Sidebar: React.FC<SidebarProps> = ({
         )}
       </div>
 
-      {/* Sidebar Actions */}
-      <div className={`border-t p-3 space-y-1.5 ${themeClasses.border} flex-shrink-0`}>
-        <button className={`flex items-center w-full px-3 py-1.5 ${themeClasses.surfaceHover} rounded transition-all duration-200 text-xs font-light`}>
-          <Search className={`w-3 h-3 ${themeClasses.textSecondary} mr-2`} />
-          <span className={themeClasses.text}>Search Files</span>
-        </button>
-        
-        <button className={`flex items-center w-full px-3 py-1.5 ${themeClasses.surfaceHover} rounded transition-all duration-200 text-xs font-light`}>
-          <GitBranch className={`w-3 h-3 ${themeClasses.textSecondary} mr-2`} />
-          <span className={themeClasses.text}>Source Control</span>
-        </button>
-        
-        <button className={`flex items-center w-full px-3 py-1.5 ${themeClasses.surfaceHover} rounded transition-all duration-200 text-xs font-light`}>
-          <Users className={`w-3 h-3 ${themeClasses.textSecondary} mr-2`} />
-          <span className={themeClasses.text}>Collaboration</span>
-        </button>
-        
-        <button className={`flex items-center w-full px-3 py-1.5 ${themeClasses.surfaceHover} rounded transition-all duration-200 text-xs font-light`}>
-          <Package className={`w-3 h-3 ${themeClasses.textSecondary} mr-2`} />
-          <span className={themeClasses.text}>Extensions</span>
-        </button>
-      </div>
-
       {/* Bottom Actions */}
       <div className={`border-t p-3 ${themeClasses.border} flex-shrink-0`}>
         <button
