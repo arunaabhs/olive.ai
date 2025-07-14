@@ -1,14 +1,15 @@
 import React, { useState } from 'react';
-import { X, File, FileText, Code, Database, Image, Settings, ChevronDown } from 'lucide-react';
+import { X, ChevronDown } from 'lucide-react';
 
 interface NewFileModalProps {
   isOpen: boolean;
   onClose: () => void;
   onCreateFile: (fileName: string, template?: string) => void;
+  onFileCreated?: (fileName: string, template?: string) => void;
   isDarkMode?: boolean;
 }
 
-const NewFileModal: React.FC<NewFileModalProps> = ({ isOpen, onClose, onCreateFile, isDarkMode = false }) => {
+const NewFileModal: React.FC<NewFileModalProps> = ({ isOpen, onClose, onCreateFile, onFileCreated, isDarkMode = false }) => {
   const [fileName, setFileName] = useState('');
   const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null);
   const [showTemplateDropdown, setShowTemplateDropdown] = useState(false);
@@ -19,14 +20,16 @@ const NewFileModal: React.FC<NewFileModalProps> = ({ isOpen, onClose, onCreateFi
     border: 'border-gray-700',
     text: 'text-gray-100',
     textSecondary: 'text-gray-300',
-    input: 'bg-gray-700 border-gray-600 text-gray-100'
+    input: 'bg-gray-700 border-gray-600 text-gray-100',
+    dropdown: 'bg-gray-800 border-gray-600'
   } : {
     bg: 'bg-white',
     surface: 'bg-gray-50',
     border: 'border-gray-200',
     text: 'text-gray-900',
     textSecondary: 'text-gray-600',
-    input: 'bg-white border-gray-300 text-gray-900'
+    input: 'bg-white border-gray-300 text-gray-900',
+    dropdown: 'bg-white border-gray-200'
   };
 
   const templates = [
@@ -34,7 +37,7 @@ const NewFileModal: React.FC<NewFileModalProps> = ({ isOpen, onClose, onCreateFi
       id: 'text',
       name: 'Text File',
       extension: '.txt',
-      icon: FileText,
+      icon: '📝',
       template: `This is a new text file.
 
 Start writing your content here...
@@ -44,7 +47,7 @@ Start writing your content here...
       id: 'javascript',
       name: 'JavaScript File',
       extension: '.js',
-      icon: Code,
+      icon: '📄',
       template: `// New JavaScript file
 console.log('Hello, World!');
 
@@ -55,7 +58,7 @@ console.log('Hello, World!');
       id: 'typescript',
       name: 'TypeScript File',
       extension: '.ts',
-      icon: Code,
+      icon: '🔷',
       template: `// New TypeScript file
 interface Example {
   message: string;
@@ -72,7 +75,7 @@ console.log(example.message);
       id: 'react',
       name: 'React Component',
       extension: '.tsx',
-      icon: Code,
+      icon: '⚛️',
       template: `import React from 'react';
 
 interface Props {
@@ -95,7 +98,7 @@ export default NewComponent;
       id: 'python',
       name: 'Python File',
       extension: '.py',
-      icon: Code,
+      icon: '🐍',
       template: `#!/usr/bin/env python3
 """
 New Python file
@@ -113,7 +116,7 @@ if __name__ == "__main__":
       id: 'html',
       name: 'HTML File',
       extension: '.html',
-      icon: FileText,
+      icon: '🌐',
       template: `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -132,7 +135,7 @@ if __name__ == "__main__":
       id: 'css',
       name: 'CSS File',
       extension: '.css',
-      icon: FileText,
+      icon: '🎨',
       template: `/* New CSS file */
 
 body {
@@ -149,7 +152,7 @@ body {
       id: 'json',
       name: 'JSON File',
       extension: '.json',
-      icon: Database,
+      icon: '📦',
       template: `{
   "name": "new-file",
   "version": "1.0.0",
@@ -161,7 +164,7 @@ body {
       id: 'markdown',
       name: 'Markdown File',
       extension: '.md',
-      icon: FileText,
+      icon: '📖',
       template: `# New Markdown File
 
 ## Introduction
@@ -196,6 +199,10 @@ console.log('Hello from markdown!');
     
     onCreateFile(finalFileName, template?.template || '');
     
+    if (onFileCreated) {
+      onFileCreated(finalFileName, template?.template || '');
+    }
+    
     setFileName('');
     setSelectedTemplate(null);
     setShowTemplateDropdown(false);
@@ -214,21 +221,21 @@ console.log('Hello from markdown!');
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className={`${themeClasses.bg} rounded-xl shadow-2xl w-full max-w-2xl border ${themeClasses.border}`}>
-        <div className={`flex items-center justify-between p-6 border-b ${themeClasses.border}`}>
-          <h2 className={`text-xl font-semibold ${themeClasses.text}`}>Create New File</h2>
+    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+      <div className={`${themeClasses.bg} rounded-2xl shadow-xl w-full max-w-md border ${themeClasses.border}`}>
+        <div className={`flex items-center justify-between p-4 border-b ${themeClasses.border}`}>
+          <h2 className={`text-lg font-medium ${themeClasses.text}`}>New File</h2>
           <button
             onClick={onClose}
-            className={`p-2 hover:bg-gray-600/20 rounded-lg transition-colors ${themeClasses.textSecondary}`}
+            className={`p-1.5 hover:bg-gray-600/20 rounded-lg transition-colors ${themeClasses.textSecondary}`}
           >
-            <X className="w-5 h-5" />
+            <X className="w-4 h-4" />
           </button>
         </div>
 
-        <div className="p-6">
-          <div className="mb-6">
-            <label className={`block text-sm font-medium ${themeClasses.text} mb-2`}>
+        <div className="p-4 space-y-4">
+          <div>
+            <label className={`block text-sm font-medium ${themeClasses.text} mb-1.5`}>
               File Name
             </label>
             <input
@@ -236,7 +243,7 @@ console.log('Hello from markdown!');
               value={fileName}
               onChange={(e) => setFileName(e.target.value)}
               placeholder="Enter file name..."
-              className={`w-full px-4 py-3 rounded-lg border ${themeClasses.input} focus:ring-2 focus:ring-blue-500 focus:border-blue-500`}
+              className={`w-full px-3 py-2 rounded-lg border ${themeClasses.input} focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm`}
               autoFocus
               onKeyDown={(e) => {
                 if (e.key === 'Enter') {
@@ -246,8 +253,8 @@ console.log('Hello from markdown!');
             />
           </div>
 
-          <div className="mb-6">
-            <label className={`block text-sm font-medium ${themeClasses.text} mb-3`}>
+          <div>
+            <label className={`block text-sm font-medium ${themeClasses.text} mb-1.5`}>
               File Type
             </label>
             
@@ -255,21 +262,27 @@ console.log('Hello from markdown!');
               <button
                 type="button"
                 onClick={() => setShowTemplateDropdown(!showTemplateDropdown)}
-                className={`w-full px-4 py-3 rounded-lg border ${themeClasses.input} focus:ring-2 focus:ring-blue-500 focus:border-blue-500 flex items-center justify-between`}
+                className={`w-full px-3 py-2 rounded-lg border ${themeClasses.input} focus:ring-2 focus:ring-blue-500 focus:border-blue-500 flex items-center justify-between text-sm`}
               >
-                <span className={selectedTemplate ? themeClasses.text : themeClasses.textSecondary}>
-                  {selectedTemplate 
-                    ? templates.find(t => t.id === selectedTemplate)?.name 
-                    : 'Select file type...'
-                  }
-                </span>
-                <ChevronDown className={`w-4 h-4 transition-transform ${showTemplateDropdown ? 'rotate-180' : ''}`} />
+                <div className="flex items-center space-x-2">
+                  {selectedTemplate && (
+                    <span className="text-sm">
+                      {templates.find(t => t.id === selectedTemplate)?.icon}
+                    </span>
+                  )}
+                  <span className={selectedTemplate ? themeClasses.text : themeClasses.textSecondary}>
+                    {selectedTemplate 
+                      ? templates.find(t => t.id === selectedTemplate)?.name 
+                      : 'Select type...'
+                    }
+                  </span>
+                </div>
+                <ChevronDown className={`w-3 h-3 transition-transform ${showTemplateDropdown ? 'rotate-180' : ''}`} />
               </button>
               
               {showTemplateDropdown && (
-                <div className={`absolute top-full left-0 right-0 mt-1 ${themeClasses.dropdown} border rounded-lg shadow-lg z-50 max-h-60 overflow-y-auto`}>
+                <div className={`absolute top-full left-0 right-0 mt-1 ${themeClasses.dropdown} border rounded-lg shadow-lg z-50 max-h-48 overflow-y-auto`}>
                   {templates.map((template) => {
-                    const Icon = template.icon;
                     return (
                       <button
                         key={template.id}
@@ -278,14 +291,14 @@ console.log('Hello from markdown!');
                           handleTemplateSelect(template.id);
                           setShowTemplateDropdown(false);
                         }}
-                        className={`w-full p-3 text-left hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors flex items-center space-x-3 ${
+                        className={`w-full p-2.5 text-left hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors flex items-center space-x-2.5 ${
                           selectedTemplate === template.id ? 'bg-blue-50 dark:bg-blue-900/20' : ''
                         }`}
                       >
-                        <Icon className={`w-4 h-4 ${selectedTemplate === template.id ? 'text-blue-600' : themeClasses.textSecondary}`} />
+                        <span className="text-sm">{template.icon}</span>
                         <div>
-                          <div className={`font-medium ${themeClasses.text}`}>{template.name}</div>
-                          <div className={`text-sm ${themeClasses.textSecondary}`}>{template.extension}</div>
+                          <div className={`text-sm font-medium ${themeClasses.text}`}>{template.name}</div>
+                          <div className={`text-xs ${themeClasses.textSecondary}`}>{template.extension}</div>
                         </div>
                       </button>
                     );
@@ -293,73 +306,19 @@ console.log('Hello from markdown!');
                 </div>
               )}
             </div>
-            
-            {selectedTemplate && (
-              <div className={`mt-3 p-3 rounded-lg ${themeClasses.surface} border ${themeClasses.border}`}>
-                <div className={`text-sm ${themeClasses.text} font-medium mb-1`}>
-                  {templates.find(t => t.id === selectedTemplate)?.name}
-                </div>
-                <div className={`text-xs ${themeClasses.textSecondary}`}>
-                  Creates a {templates.find(t => t.id === selectedTemplate)?.extension} file with starter template
-                </div>
-              </div>
-            )}
           </div>
 
-          {/* Preview of selected template */}
-          {selectedTemplate && (
-            <div className="mb-6">
-              <label className={`block text-sm font-medium ${themeClasses.text} mb-2`}>
-                Template Preview
-              </label>
-              <div className={`p-3 rounded-lg ${themeClasses.surface} border ${themeClasses.border} max-h-32 overflow-y-auto`}>
-                <pre className={`text-xs ${themeClasses.textSecondary} font-mono whitespace-pre-wrap`}>
-                  {templates.find(t => t.id === selectedTemplate)?.template.slice(0, 200)}
-                  {(templates.find(t => t.id === selectedTemplate)?.template.length || 0) > 200 ? '...' : ''}
-                </pre>
-              </div>
-            </div>
-          )}
-
-          {/* Legacy grid view - hidden but kept for reference */}
-          <div className="hidden">
-            <div className="grid grid-cols-2 gap-3">
-              {templates.map((template) => {
-                const Icon = template.icon;
-                return (
-                  <button
-                    key={template.id}
-                    onClick={() => handleTemplateSelect(template.id)}
-                    className={`p-4 rounded-lg border-2 transition-all text-left ${
-                      selectedTemplate === template.id
-                        ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
-                        : `${themeClasses.border} hover:border-blue-300 ${themeClasses.surface}`
-                    }`}
-                  >
-                    <div className="flex items-center space-x-3">
-                      <Icon className={`w-5 h-5 ${selectedTemplate === template.id ? 'text-blue-600' : themeClasses.textSecondary}`} />
-                      <div>
-                        <div className={`font-medium ${themeClasses.text}`}>{template.name}</div>
-                        <div className={`text-sm ${themeClasses.textSecondary}`}>{template.extension}</div>
-                      </div>
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          <div className="flex items-center justify-end space-x-3">
+          <div className="flex items-center justify-end space-x-2 pt-2">
             <button
               onClick={onClose}
-              className={`px-4 py-2 rounded-lg border ${themeClasses.border} ${themeClasses.textSecondary} hover:bg-gray-600/10 transition-colors`}
+              className={`px-3 py-1.5 rounded-lg border ${themeClasses.border} ${themeClasses.textSecondary} hover:bg-gray-600/10 transition-colors text-sm`}
             >
               Cancel
             </button>
             <button
               onClick={handleCreate}
               disabled={!fileName.trim()}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="px-3 py-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm"
             >
               Create File
             </button>
