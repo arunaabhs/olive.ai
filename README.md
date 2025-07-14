@@ -21,7 +21,6 @@ A modern, browser-based collaborative code editor with AI assistance, real-time 
   - Gemini 2.0 Flash (Google)
   - DeepSeek R1 (Advanced reasoning)
   - Mistral 7B (Efficient processing)
-- **Real AI Integration**: Live API connections with actual AI responses
 - **Code Assistance**: Code explanation, debugging, optimization suggestions
 - **Context-Aware**: Understands your current code and provides relevant suggestions
 - **Interactive Chat**: Natural language interaction with AI assistants
