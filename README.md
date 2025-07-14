@@ -162,25 +162,6 @@ A modern, browser-based collaborative code editor with AI assistance, real-time 
 
 ## 📖 Usage Guide
 
-### Basic Editor Usage
-
-1. **Creating Files**
-   - Click "File" → "New File" or use `Ctrl+N`
-   - Choose from templates (JavaScript, TypeScript, React, Python, etc.)
-   - Start coding with full IntelliSense support
-
-2. **File Operations**
-   - **Save**: `Ctrl+S`
-   - **Save As**: `Ctrl+Shift+S`
-   - **Open**: `Ctrl+O`
-   - **Find**: `Ctrl+F`
-   - **Replace**: `Ctrl+H`
-
-3. **Code Execution**
-   - Click the "Run" button or press `Ctrl+Enter`
-   - View output in the integrated terminal
-   - Supports JavaScript, Python, HTML, and more
-
 ### Collaboration Features
 
 1. **Starting a Collaboration Session**
