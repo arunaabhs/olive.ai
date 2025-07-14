@@ -456,29 +456,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - **React Team** - Amazing frontend framework
 - **Vite** - Fast build tool and development server
 
-## 🗺️ Roadmap
-
-### Version 2.1 (Q2 2024)
-- [ ] Git integration with version control
-- [ ] Plugin system for extensions
-- [ ] Advanced debugging tools
-- [ ] Code review and commenting
-- [ ] Project templates and scaffolding
-
-### Version 2.2 (Q3 2024)
-- [ ] Mobile app (React Native)
-- [ ] Offline mode with sync
-- [ ] Advanced AI code generation
-- [ ] Team workspaces
-- [ ] Performance analytics
-
-### Version 3.0 (Q4 2024)
-- [ ] Self-hosted deployment option
-- [ ] Enterprise features
-- [ ] Advanced security controls
-- [ ] Custom AI model integration
-- [ ] Marketplace for extensions
-
 ## 📞 Support
 
 - **Documentation**: [docs.olive-editor.com](https://docs.olive-editor.com)
