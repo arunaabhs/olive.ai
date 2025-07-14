@@ -30,39 +30,15 @@ export const useEditorOperations = () => {
   }, []);
 
   const undo = useCallback(() => {
-    setEditorState(prev => {
-      if (prev.historyIndex > 0) {
-        const newIndex = prev.historyIndex - 1;
-        const content = prev.history[newIndex];
-        if (editorRef.current) {
-          editorRef.current.setValue(content);
-        }
-        return {
-          ...prev,
-          content,
-          historyIndex: newIndex
-        };
-      }
-      return prev;
-    });
+    if (editorRef.current) {
+      editorRef.current.trigger('keyboard', 'undo');
+    }
   }, []);
 
   const redo = useCallback(() => {
-    setEditorState(prev => {
-      if (prev.historyIndex < prev.history.length - 1) {
-        const newIndex = prev.historyIndex + 1;
-        const content = prev.history[newIndex];
-        if (editorRef.current) {
-          editorRef.current.setValue(content);
-        }
-        return {
-          ...prev,
-          content,
-          historyIndex: newIndex
-        };
-      }
-      return prev;
-    });
+    if (editorRef.current) {
+      editorRef.current.trigger('keyboard', 'redo');
+    }
   }, []);
 
   const addToHistory = useCallback((content: string) => {
@@ -80,46 +56,28 @@ export const useEditorOperations = () => {
 
   const cut = useCallback(() => {
     if (editorRef.current) {
-      const selection = editorRef.current.getSelection();
-      const selectedText = editorRef.current.getModel().getValueInRange(selection);
-      navigator.clipboard.writeText(selectedText);
-      editorRef.current.executeEdits('cut', [{
-        range: selection,
-        text: ''
-      }]);
-      addToHistory(editorRef.current.getValue());
+      editorRef.current.focus();
+      document.execCommand('cut');
     }
   }, [addToHistory]);
 
   const copy = useCallback(() => {
     if (editorRef.current) {
-      const selection = editorRef.current.getSelection();
-      const selectedText = editorRef.current.getModel().getValueInRange(selection);
-      navigator.clipboard.writeText(selectedText);
+      editorRef.current.focus();
+      document.execCommand('copy');
     }
   }, []);
 
   const paste = useCallback(async () => {
     if (editorRef.current) {
-      try {
-        const text = await navigator.clipboard.readText();
-        const selection = editorRef.current.getSelection();
-        editorRef.current.executeEdits('paste', [{
-          range: selection,
-          text: text
-        }]);
-        addToHistory(editorRef.current.getValue());
-      } catch (err) {
-        console.error('Failed to paste:', err);
-      }
+      editorRef.current.focus();
+      editorRef.current.trigger('keyboard', 'editor.action.clipboardPasteAction');
     }
   }, [addToHistory]);
 
   const selectAll = useCallback(() => {
     if (editorRef.current) {
-      const model = editorRef.current.getModel();
-      const fullRange = model.getFullModelRange();
-      editorRef.current.setSelection(fullRange);
+      editorRef.current.trigger('keyboard', 'editor.action.selectAll');
     }
   }, []);
 

@@ -6,6 +6,7 @@ import CopilotSidebar from './CopilotSidebar';
 import Terminal from './Terminal';
 import NewFileModal from './modals/NewFileModal';
 import { useAuth } from '../contexts/AuthContext';
+import { useEditorOperations } from '../hooks/useEditorOperations';
 
 interface DashboardProps {
   projectId?: string;
@@ -45,6 +46,7 @@ Happy coding! 🚀`
   
   const editorRef = useRef<any>(null);
   const { user } = useAuth();
+  const { setEditorRef } = useEditorOperations();
 
   // Generate project ID based on environment and user
   const generateProjectId = () => {
@@ -76,6 +78,10 @@ Happy coding! 🚀`
     return currentCode;
   };
 
+  const handleEditorReady = (editor: any) => {
+    editorRef.current = editor;
+    setEditorRef(editor);
+  };
   const handleCloseTab = (tabName: string) => {
     const newTabs = openTabs.filter(tab => tab !== tabName);
     setOpenTabs(newTabs);
@@ -296,6 +302,7 @@ Happy coding! 🚀`
               isDarkMode={isDarkMode}
               projectId={projectId}
               collaborators={collaborators}
+              onEditorReady={handleEditorReady}
             />
           </div>
 

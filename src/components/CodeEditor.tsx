@@ -12,6 +12,7 @@ interface CodeEditorProps {
   isDarkMode?: boolean;
   projectId?: string;
   collaborators?: any[];
+  onEditorReady?: (editor: any) => void;
 }
 
 interface CodeEditorRef {
@@ -26,7 +27,8 @@ const CodeEditor = forwardRef<CodeEditorRef, CodeEditorProps>(({
   onRunCode,
   isDarkMode = false,
   projectId = 'default-project',
-  collaborators = []
+  collaborators = [],
+  onEditorReady
 }, ref) => {
   const editorRef = useRef<any>(null);
   const monacoRef = useRef<any>(null);
@@ -226,6 +228,11 @@ Start writing your content here...`;
   const handleEditorDidMount = (editor: any, monaco: any) => {
     editorRef.current = editor;
     monacoRef.current = monaco;
+
+    // Notify parent component that editor is ready
+    if (onEditorReady) {
+      onEditorReady(editor);
+    }
 
     // Set default content if editor is empty
     const currentValue = editor.getValue();
