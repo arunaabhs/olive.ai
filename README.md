@@ -249,48 +249,7 @@ A modern, browser-based collaborative code editor with AI assistance, real-time 
    clear            # Clear terminal
    help             # Show all commands
    ```
-
-## 🎯 Menu System Reference
-
-### File Menu
-- **New File** (`Ctrl+N`) - Create new file with templates
-- **Open File** (`Ctrl+O`) - Open existing files
-- **Save** (`Ctrl+S`) - Save current file
-- **Save As** (`Ctrl+Shift+S`) - Save with new name
-- **Export Project** - Download project archive
-
-### Edit Menu
-- **Undo** (`Ctrl+Z`) - Undo last action
-- **Redo** (`Ctrl+Y`) - Redo last undone action
-- **Cut** (`Ctrl+X`) - Cut selected text
-- **Copy** (`Ctrl+C`) - Copy selected text
-- **Paste** (`Ctrl+V`) - Paste from clipboard
-- **Select All** (`Ctrl+A`) - Select all text
-- **Find** (`Ctrl+F`) - Search in file
-- **Replace** (`Ctrl+H`) - Find and replace
-- **Go to Line** (`Ctrl+G`) - Jump to specific line
-- **Format Document** - Auto-format code
-- **Toggle Comment** - Comment/uncomment lines
-
-### View Menu
-- **Command Palette** (`Ctrl+Shift+P`) - Quick command access
-- **Toggle Sidebar** (`Ctrl+B`) - Show/hide file explorer
-- **Toggle Terminal** (`Ctrl+``) - Show/hide terminal
-- **Toggle Copilot** (`Ctrl+Shift+A`) - Show/hide AI assistant
-- **Minimap** - Toggle code minimap
-- **Line Numbers** - Show/hide line numbers
-- **Word Wrap** - Enable/disable word wrapping
-- **Zen Mode** - Distraction-free editing
-- **Full Screen** - Full screen mode
-- **Zoom In/Out** - Adjust font size
-
-### Collaboration Menu
-- **Share Project Link** - Generate shareable URL
-- **Invite Collaborator** - Send email invitations
-- **Start Live Share** - Begin real-time session
-- **Export Project** - Download project data
-- **Manage Collaborators** - User permissions
-
+   
 ## 🏗️ Architecture
 
 ### Component Structure
