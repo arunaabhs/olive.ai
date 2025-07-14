@@ -42,14 +42,6 @@ A modern, browser-based collaborative code editor with AI assistance, real-time 
 - **File Operations**: Built-in file system commands (ls, cd, mkdir, etc.)
 - **Package Management**: npm, pip, and yarn command support
 
-### 🎨 **Professional UI/UX**
-- **VS Code-Inspired Interface**: Familiar menu system and layout
-- **Dark/Light Themes**: Toggle between themes with smooth transitions
-- **Responsive Design**: Works seamlessly on desktop, tablet, and mobile
-- **Customizable Layout**: Resizable panels and configurable workspace
-- **Keyboard Shortcuts**: Full keyboard navigation and shortcuts
-- **Zen Mode**: Distraction-free coding environment
-
 ### 🔐 **Authentication & Security**
 - **Supabase Authentication**: Secure email/password authentication
 - **Session Management**: Persistent login sessions
@@ -75,13 +67,11 @@ A modern, browser-based collaborative code editor with AI assistance, real-time 
 
 ### **AI Integration**
 - **Gemini API** - Google's advanced language model
-- **OpenRouter API** - Access to multiple AI models
 - **DeepSeek R1** - Advanced reasoning capabilities
 - **Mistral 7B** - Efficient language processing
 
 ### **Backend Services**
 - **Supabase** - Backend-as-a-Service platform
-- **PostgreSQL** - Robust relational database
 - **Real-time subscriptions** - Live data synchronization
 - **Row Level Security** - Fine-grained access control
 
