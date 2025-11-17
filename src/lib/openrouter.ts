@@ -46,13 +46,9 @@ export class OpenRouterAPI {
     this.baseUrl = import.meta.env.VITE_OPENROUTER_API_URL || 'https://openrouter.ai/api/v1/chat/completions';
     this.siteUrl = import.meta.env.VITE_SITE_URL || 'http://localhost:5173';
     this.siteName = import.meta.env.VITE_SITE_NAME || 'Olive Code Editor';
-    
+
     if (!this.deepSeekApiKey) {
       throw new Error('DeepSeek API key is not configured. Please check your VITE_OPENROUTER_API_KEY environment variable.');
-    }
-    
-    if (!this.mistralApiKey) {
-      throw new Error('Mistral API key is not configured. Please check your VITE_MISTRAL_API_KEY environment variable.');
     }
   }
 
